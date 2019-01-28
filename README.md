@@ -1,14 +1,11 @@
-# abp2blocklist
+# abp2chromerules
 
 This is a script to convert [Adblock Plus filter lists](https://adblockplus.org/filters)
-to [WebKit block lists](https://www.webkit.org/blog/3476/content-blockers-first-look/).
+to [chrome.declarativeNetRequest rules](https://developer.chrome.com/extensions/declarativeNetRequest).
 
-Note that WebKit content blockers are fairly limited. Hence, not all filters
+Note that `chrome.declarativeNetRequest` is quite limited. Hence, not all filters
 can be converted (in a compatible way), and some differences compared to Adblock
 Plus for other browsers are expected.
-
-This script is used to convert the filter lists for
-[Adblock Plus for iOS](https://adblockplus.org/releases/adblock-plus-10-for-ios-released).
 
 ## Requirements
 
@@ -26,7 +23,7 @@ JS Hydra, and small modifications made. If you need to re-generate the file run
 this command (adjusting the paths as appropriate):
 
 ```
-python buildtools/jshydra/abp_rewrite.py adblockpluscore/lib/filterClasses.js | grep -vi filterNotifier > ../abp2blocklist/node_modules/filterClasses.js
+python buildtools/jshydra/abp_rewrite.py adblockpluscore/lib/filterClasses.js | grep -vi filterNotifier > ../abp2chromerules/node_modules/filterClasses.js
 ```
 You will then need to remove any references to the `utils` module from the
 generated file by hand.
@@ -34,16 +31,7 @@ generated file by hand.
 
 ## Usage
 
-Create a WebKit block list `output.json` from the Adblock Plus filter list `input.txt`:
+Create a chrome.declarativeNetRequest rule list `output.json` from the Adblock Plus filter list `input.txt`:
 ```
-node abp2blocklist.js < input.txt > output.json
-```
-
-## Tests
-
-Unit tests live in the `tests/` directory. To run the unit tests ensure you have
-already installed the required packages (see above) and then type this command:
-
-```
-npm test
+node abp2chromerules.js < input.txt > output.json
 ```

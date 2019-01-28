@@ -19,10 +19,10 @@
 
 let readline = require("readline");
 let Filter = require("filterClasses").Filter;
-let ContentBlockerList = require("./lib/abp2blocklist.js").ContentBlockerList;
+let ContentBlockerList = require("./lib/abp2chromerules.js").ContentBlockerList;
 
 var rl = readline.createInterface({input: process.stdin, terminal: false});
-var blockerList = new ContentBlockerList({merge: "all"});
+var blockerList = new ContentBlockerList();
 
 rl.on("line", line =>
 {
@@ -32,19 +32,15 @@ rl.on("line", line =>
 
 rl.on("close", () =>
 {
-  blockerList.generateRules().then(rules =>
-  {
-    // If the rule set is too huge, JSON.stringify throws
-    // "RangeError: Invalid string length" on Node.js. As a workaround, print
-    // each rule individually.
-    console.log("[");
-    if (rules.length > 0)
-    {
-      let stringifyRule = rule => JSON.stringify(rule, null, "\t");
-      for (let i = 0; i < rules.length - 1; i++)
-        console.log(stringifyRule(rules[i]) + ",");
-      console.log(stringifyRule(rules[rules.length - 1]));
-    }
-    console.log("]");
-  });
+  let rules = blockerList.generateRules();
+
+  // If the rule set is too huge, JSON.stringify throws
+  // "RangeError: Invalid string length" on Node.js. As a workaround, print
+  // each rule individually.
+  console.log("[");
+
+  for (let i = 0; i < rules.length - 1; i++)
+    console.log(JSON.stringify(rules[i], null, "\t") + ",");
+  console.log(JSON.stringify(rules[rules.length - 1], null, "\t"));
+  console.log("]");
 });
