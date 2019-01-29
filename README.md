@@ -35,3 +35,12 @@ Create a chrome.declarativeNetRequest rule list `output.json` from the Adblock P
 ```
 node abp2chromerules.js < input.txt > output.json
 ```
+
+## Tests
+
+Unit tests live in the `tests/` directory. To run the unit tests ensure you have
+already installed the required packages (see above) and then type this command:
+
+```
+npm test
+```
