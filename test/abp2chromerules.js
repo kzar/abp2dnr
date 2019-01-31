@@ -43,19 +43,14 @@ exports.generateRules = {
         id: 1,
         condition: {
           urlFilter: "/foo",
-          isUrlFilterCaseSensitive: false,
-          resourceTypes: ["image", "stylesheet", "script", "font",
-                          "media", "raw"]
+          isUrlFilterCaseSensitive: false
         },
         action: {type: "block"}
       },
       {
         id: 2,
         condition: {
-          urlFilter: "||test.com^",
-          isUrlFilterCaseSensitive: false,
-          resourceTypes: ["image", "stylesheet", "script", "font",
-                          "media", "raw", "document"]
+          urlFilter: "||test.com^"
         },
         action: {type: "block"}
       },
@@ -63,29 +58,15 @@ exports.generateRules = {
         id: 3,
         condition: {
           urlFilter: "http://example.com/foo",
-          isUrlFilterCaseSensitive: false,
-          resourceTypes: ["image", "stylesheet", "script", "font",
-                          "media", "raw", "document"]
+          isUrlFilterCaseSensitive: false
         },
         action: {type: "block"}
       },
       {
         id: 4,
         condition: {
-          "urlFilter": "^[^:]+:(//)?.*http://example\\.com/foo",
-          isUrlFilterCaseSensitive: false,
-          "resourceTypes": ["image", "stylesheet", "script", "font",
-                            "media", "raw", "document"]
-        },
-        action: {type: "block"}
-      },
-      {
-        id: 5,
-        condition: {
-          "urlFilter": "^foo",
-          isUrlFilterCaseSensitive: false,
-          "resourceTypes": ["image", "stylesheet", "script", "font",
-                            "media", "raw"]
+          "urlFilter": "^foo^",
+          isUrlFilterCaseSensitive: false
         },
         action: {type: "block"}
       }
@@ -95,9 +76,7 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "urlFilter": "||example.com",
-          "resourceTypes": ["image", "stylesheet", "script", "font",
-                            "media", "raw", "document"]
+          "urlFilter": "||example.com"
         },
         action: {type: "block"}
       }
@@ -116,8 +95,8 @@ exports.generateRules = {
         id: 1,
         condition: {
           "urlFilter": "example.com",
-          "resourceTypes": ["image", "stylesheet", "script", "font",
-                            "media", "raw", "document"]},
+          "isUrlFilterCaseSensitive": false
+        },
        action: {type: "allow"}}
     ]);
 
@@ -125,9 +104,7 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "urlFilter": "||example.com",
-          "resourceTypes": ["image", "stylesheet", "script", "font",
-                            "media", "raw", "document"]
+          "urlFilter": "||example.com"
         },
        action: {type: "allow"}}
     ]);
@@ -141,7 +118,7 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "domains": ["*example.com"]
+          "domains": ["example.com"]
         },
         action: {type: "allow"}
       }
@@ -150,8 +127,15 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "domains": ["*example.com"],
-          "resourceTypes": ["document", "image"]
+          "domains": ["example.com"]
+        },
+        action: {type: "allow"}
+      },
+      {
+        id: 2,
+        condition: {
+          "urlFilter": "||example.com^",
+          "resourceTypes": ["image"]
         },
         action: {type: "allow"}
       }
@@ -160,8 +144,9 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "domains": ["*example.com"],
-          "resourceTypes": ["document", "font"]
+          "urlFilter": "||example.com/path^",
+          "isUrlFilterCaseSensitive": false,
+          "resourceTypes": ["font"]
         },
         action: {type: "allow"}
       }
@@ -173,17 +158,17 @@ exports.generateRules = {
   testGenericblockExceptions: function(test)
   {
     testRules(test, ["^ad.jpg|", "@@||example.com^$genericblock"],
-              [[undefined, ["*example.com"]]],
+              [[undefined, ["example.com"]]],
               rules => rules.map(rule => [rule.condition["domains"],
                                           rule.condition["excludedDomains"]]));
     testRules(test, ["^ad.jpg|$domain=test.com",
                      "@@||example.com^$genericblock"],
-              [[["*test.com"], undefined]],
+              [[["test.com"], undefined]],
               rules => rules.map(rule => [rule.condition["domains"],
                                           rule.condition["excludedDomains"]]));
     testRules(test, ["^ad.jpg|$domain=~test.com",
                      "@@||example.com^$genericblock"],
-              [[undefined, ["*test.com", "*example.com"]]],
+              [[undefined, ["test.com", "example.com"]]],
               rules => rules.map(rule => [rule.condition["domains"],
                                           rule.condition["excludedDomains"]]));
 
@@ -217,7 +202,7 @@ exports.generateRules = {
       ["1", "2$image", "3$stylesheet", "4$script", "5$font", "6$media",
        "7$object", "8$xmlhttprequest", "9$websocket", "10$ping",
        "11$subdocument", "12$other", "13$IMAGE", "14$script,PING", "15$~image"],
-      [undefined, // FIXME - Should use default, or is that incorrect?
+      [undefined,
        ["image"],
        ["stylesheet"],
        ["script"],
@@ -228,11 +213,11 @@ exports.generateRules = {
        ["websocket"],
        ["ping"],
        ["sub_frame"],
-       ["other"],
+       ["other", "csp_report"],
        ["image"],
        ["script", "ping"],
        ["stylesheet", "script", "font", "media", "object", "xmlhttprequest",
-        "websocket", "ping", "sub_frame", "other"]],
+        "websocket", "ping", "sub_frame", "other", "csp_report"]],
       rules => rules.map(rule => rule.condition["resourceTypes"])
     );
 
@@ -267,37 +252,51 @@ exports.generateRules = {
 
   testFilterOptions: function(test)
   {
-    testRules(test, ["1$domain=foo.com"], ["*foo.com"],
+    testRules(test, ["1$domain=foo.com"], ["foo.com"],
               rules => rules[0]["condition"]["domains"]);
     testRules(test, ["2$third-party"], "thirdParty",
               rules => rules[0]["condition"]["domainType"]);
 
-    testRules(test, ["||test.com"], false,
+    testRules(test, ["||test.com"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
     testRules(test, ["||test.com$match_case"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
+    testRules(test, ["||test.com/foo"], false,
+              rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
+    testRules(test, ["||test.com/foo$match_case"], undefined,
+              rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
+    testRules(test, ["||test.com/Foo"], false,
+              rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
+    testRules(test, ["||test.com/Foo$match_case"], undefined,
+              rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
 
     // Test subdomain exceptions.
-    testRules(test, ["1$domain=foo.com|~bar.foo.com"],
-              ["foo.com", "www.foo.com"],
-              rules => rules[0]["condition"]["domains"]);
-    testRules(test, ["1$domain=foo.com|~www.foo.com"],
-              ["foo.com"],
-              rules => rules[0]["condition"]["domains"]);
+    testRules(test, ["1$domain=foo.com|~bar.foo.com"], [
+      {
+        id: 1,
+        condition: {
+          urlFilter: "1",
+          isUrlFilterCaseSensitive: false,
+          domains: ["foo.com"],
+          excludedDomains: ["bar.foo.com"]
+        },
+        action: {type: "block"}
+      }
+    ]);
 
     test.done();
   },
 
   testUnicode: function(test)
   {
-    testRules(test, ["$domain=🐈.cat"], ["*xn--zn8h.cat"],
+    testRules(test, ["$domain=🐈.cat"], ["xn--zn8h.cat"],
               rules => rules[0]["condition"]["domains"]);
     testRules(test, ["||🐈"], "||xn--zn8h",
               rules => rules[0]["condition"]["urlFilter"]);
-    testRules(test, ["🐈$domain=🐈.cat"], "^[^:]+:(//)?.*%F0%9F%90%88",
+    testRules(test, ["🐈$domain=🐈.cat"], "%F0%9F%90%88",
               rules => rules[0]["condition"]["urlFilter"]);
     testRules(test, ["🐈%F0%9F%90%88$domain=🐈.cat"],
-              "^[^:]+:(//)?.*%F0%9F%90%88%F0%9F%90%88",
+              "%F0%9F%90%88%F0%9F%90%88",
               rules => rules[0]["condition"]["urlFilter"]);
 
     test.done();
