@@ -28,13 +28,13 @@ function testRules(test, filters, expected, transformFunction)
 
   let rules = blockerList.generateRules();
   if (transformFunction)
-      rules = transformFunction(rules);
+    rules = transformFunction(rules);
 
   test.deepEqual(rules, expected);
 }
 
 exports.generateRules = {
-  testRequestFilters: function(test)
+  testRequestFilters(test)
   {
     testRules(test, [
       "/foo", "||test.com^", "http://example.com/foo", "^foo^"
@@ -65,7 +65,7 @@ exports.generateRules = {
       {
         id: 4,
         condition: {
-          "urlFilter": "^foo^",
+          urlFilter: "^foo^",
           isUrlFilterCaseSensitive: false
         },
         action: {type: "block"}
@@ -76,7 +76,7 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "urlFilter": "||example.com"
+          urlFilter: "||example.com"
         },
         action: {type: "block"}
       }
@@ -88,37 +88,37 @@ exports.generateRules = {
     test.done();
   },
 
-  testRequestFilterExceptions: function(test)
+  testRequestFilterExceptions(test)
   {
     testRules(test, ["@@example.com"], [
       {
         id: 1,
         condition: {
-          "urlFilter": "example.com",
-          "isUrlFilterCaseSensitive": false
+          urlFilter: "example.com",
+          isUrlFilterCaseSensitive: false
         },
-       action: {type: "allow"}}
+        action: {type: "allow"}}
     ]);
 
     testRules(test, ["@@||example.com"], [
       {
         id: 1,
         condition: {
-          "urlFilter": "||example.com"
+          urlFilter: "||example.com"
         },
-       action: {type: "allow"}}
+        action: {type: "allow"}}
     ]);
 
     test.done();
   },
 
-  testDomainWhitelisting: function(test)
+  testDomainWhitelisting(test)
   {
     testRules(test, ["@@||example.com^$document"], [
       {
         id: 1,
         condition: {
-          "domains": ["example.com"]
+          domains: ["example.com"]
         },
         action: {type: "allow"}
       }
@@ -127,15 +127,15 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "domains": ["example.com"]
+          domains: ["example.com"]
         },
         action: {type: "allow"}
       },
       {
         id: 2,
         condition: {
-          "urlFilter": "||example.com^",
-          "resourceTypes": ["image"]
+          urlFilter: "||example.com^",
+          resourceTypes: ["image"]
         },
         action: {type: "allow"}
       }
@@ -144,9 +144,9 @@ exports.generateRules = {
       {
         id: 1,
         condition: {
-          "urlFilter": "||example.com/path^",
-          "isUrlFilterCaseSensitive": false,
-          "resourceTypes": ["font"]
+          urlFilter: "||example.com/path^",
+          isUrlFilterCaseSensitive: false,
+          resourceTypes: ["font"]
         },
         action: {type: "allow"}
       }
@@ -155,7 +155,7 @@ exports.generateRules = {
     test.done();
   },
 
-  testGenericblockExceptions: function(test)
+  testGenericblockExceptions(test)
   {
     testRules(test, ["^ad.jpg|", "@@||example.com^$genericblock"],
               [[undefined, ["example.com"]]],
@@ -175,7 +175,7 @@ exports.generateRules = {
     test.done();
   },
 
-  testRuleOrdering: function(test)
+  testRuleOrdering(test)
   {
     testRules(
       test,
@@ -193,12 +193,12 @@ exports.generateRules = {
     test.done();
   },
 
-  testRequestTypeMapping: function(test)
+  testRequestTypeMapping(test)
   {
     testRules(
       test,
       ["1", "2$image", "3$stylesheet", "4$script", "5$font", "6$media",
-       "7$object", "8$object_subrequest","9$xmlhttprequest", "10$websocket",
+       "7$object", "8$object_subrequest", "9$xmlhttprequest", "10$websocket",
        "11$ping", "12$subdocument", "13$other", "14$IMAGE", "15$script,PING",
        "16$~image"],
       [undefined,
@@ -224,7 +224,7 @@ exports.generateRules = {
     test.done();
   },
 
-  testUnsupportedfilters: function(test)
+  testUnsupportedfilters(test)
   {
     // $sitekey
     testRules(test, ["foo$sitekey=bar"], []);
@@ -259,7 +259,7 @@ exports.generateRules = {
     test.done();
   },
 
-  testFilterOptions: function(test)
+  testFilterOptions(test)
   {
     testRules(test, ["1$domain=foo.com"], ["foo.com"],
               rules => rules[0]["condition"]["domains"]);
@@ -296,20 +296,20 @@ exports.generateRules = {
     test.done();
   },
 
-  testWebSocket: function(test)
+  testWebSocket(test)
   {
     testRules(test, ["foo$websocket"], [
       {
         id: 1,
         condition: {
-          "urlFilter": "foo",
-          "isUrlFilterCaseSensitive": false,
-          "resourceTypes": ["websocket"]
+          urlFilter: "foo",
+          isUrlFilterCaseSensitive: false,
+          resourceTypes: ["websocket"]
         },
         action: {type: "block"}
       }
     ]);
 
     test.done();
-  },
+  }
 };

@@ -44,3 +44,13 @@ already installed the required packages (see above) and then type this command:
 ```
 npm test
 ```
+
+## Linting
+
+You can lint the code using [ESLint](http://eslint.org):
+
+    eslint lib/*.js test/*.js
+
+_Note: You'll need to install the [eslint-config-eyeo][1] configuration first._
+
+[1]: https://hg.adblockplus.org/codingtools/file/tip/eslint-config-eyeo
