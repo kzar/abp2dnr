@@ -195,19 +195,19 @@ exports.generateRules = {
 
   testRequestTypeMapping: function(test)
   {
-    // FIXME - What about WEBRTC, OBJECT_SUBREQUEST and POPUP?
-
     testRules(
       test,
       ["1", "2$image", "3$stylesheet", "4$script", "5$font", "6$media",
-       "7$object", "8$xmlhttprequest", "9$websocket", "10$ping",
-       "11$subdocument", "12$other", "13$IMAGE", "14$script,PING", "15$~image"],
+       "7$object", "8$object_subrequest","9$xmlhttprequest", "10$websocket",
+       "11$ping", "12$subdocument", "13$other", "14$IMAGE", "15$script,PING",
+       "16$~image"],
       [undefined,
        ["image"],
        ["stylesheet"],
        ["script"],
        ["font"],
        ["media"],
+       ["object"],
        ["object"],
        ["xmlhttprequest"],
        ["websocket"],
@@ -246,6 +246,9 @@ exports.generateRules = {
 
     // WebRTC
     testRules(test, ["foo$webrtc"], []);
+
+    // Popup
+    testRules(test, ["bar$popup"], []);
 
     test.done();
   },
