@@ -250,6 +250,12 @@ exports.generateRules = {
     // Popup
     testRules(test, ["bar$popup"], []);
 
+    // Unicode
+    testRules(test, ["$domain=🐈.cat"], []);
+    testRules(test, ["||🐈"], []);
+    testRules(test, ["🐈$domain=🐈.cat"], []);
+    testRules(test, ["🐈%F0%9F%90%88$domain=🐈.cat"], []);
+
     test.done();
   },
 
@@ -286,21 +292,6 @@ exports.generateRules = {
         action: {type: "block"}
       }
     ]);
-
-    test.done();
-  },
-
-  testUnicode: function(test)
-  {
-    testRules(test, ["$domain=🐈.cat"], ["xn--zn8h.cat"],
-              rules => rules[0]["condition"]["domains"]);
-    testRules(test, ["||🐈"], "||xn--zn8h",
-              rules => rules[0]["condition"]["urlFilter"]);
-    testRules(test, ["🐈$domain=🐈.cat"], "%F0%9F%90%88",
-              rules => rules[0]["condition"]["urlFilter"]);
-    testRules(test, ["🐈%F0%9F%90%88$domain=🐈.cat"],
-              "%F0%9F%90%88%F0%9F%90%88",
-              rules => rules[0]["condition"]["urlFilter"]);
 
     test.done();
   },
