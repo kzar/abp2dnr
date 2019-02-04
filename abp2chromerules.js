@@ -15,24 +15,27 @@
  * along with Adblock Plus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* eslint no-console: "off" */
+
 "use strict";
 
 let readline = require("readline");
 let Filter = require("filterClasses").Filter;
-let ContentBlockerList = require("./lib/abp2chromerules.js").ContentBlockerList;
+let {generateRules} = require("./lib/abp2chromerules.js");
 
-var rl = readline.createInterface({input: process.stdin, terminal: false});
-var blockerList = new ContentBlockerList();
+let rl = readline.createInterface({input: process.stdin, terminal: false});
+
+let filters = [];
 
 rl.on("line", line =>
 {
-  if (/^\s*[^\[\s]/.test(line))
-    blockerList.addFilter(Filter.fromText(Filter.normalize(line)));
+  if (/^\s*[^[\s]/.test(line))
+    filters.push(Filter.fromText(Filter.normalize(line)));
 });
 
 rl.on("close", () =>
 {
-  let rules = blockerList.generateRules();
+  let rules = generateRules(filters);
 
   // If the rule set is too huge, JSON.stringify throws
   // "RangeError: Invalid string length" on Node.js. As a workaround, print

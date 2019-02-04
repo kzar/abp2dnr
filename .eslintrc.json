@@ -1,0 +1,9 @@
+{
+  "extends": "eslint-config-eyeo",
+  "root": true,
+  "env": {
+    "node": true
+  },
+  "globals": {
+  }
+}

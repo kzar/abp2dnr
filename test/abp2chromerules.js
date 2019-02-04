@@ -18,15 +18,11 @@
 "use strict";
 
 const {Filter} = require("filterClasses");
-const {ContentBlockerList} = require("../lib/abp2chromerules.js");
+const {generateRules} = require("../lib/abp2chromerules.js");
 
 function testRules(test, filters, expected, transformFunction)
 {
-  let blockerList = new ContentBlockerList();
-  for (let filter of filters)
-    blockerList.addFilter(Filter.fromText(filter));
-
-  let rules = blockerList.generateRules();
+  let rules = generateRules(filters.map(Filter.fromText));
   if (transformFunction)
     rules = transformFunction(rules);
 
@@ -140,6 +136,23 @@ exports.generateRules = {
         action: {type: "allow"}
       }
     ]);
+    testRules(test, ["@@||bar.com^$document,image", "@@||foo.com^$document"], [
+      {
+        id: 1,
+        condition: {
+          domains: ["bar.com", "foo.com"]
+        },
+        action: {type: "allow"}
+      },
+      {
+        id: 2,
+        condition: {
+          urlFilter: "||bar.com^",
+          resourceTypes: ["image"]
+        },
+        action: {type: "allow"}
+      }
+    ]);
     testRules(test, ["@@||example.com/path^$font,document"], [
       {
         id: 1,
@@ -171,24 +184,12 @@ exports.generateRules = {
               [[undefined, ["test.com", "example.com"]]],
               rules => rules.map(rule => [rule.condition["domains"],
                                           rule.condition["excludedDomains"]]));
+    testRules(test, ["^ad.jpg|", "@@||example.com^$genericblock",
+                     "@@ad.jpg"],
+              [[undefined, ["example.com"]], [undefined, undefined]],
+              rules => rules.map(rule => [rule.condition["domains"],
+                                          rule.condition["excludedDomains"]]));
 
-    test.done();
-  },
-
-  testRuleOrdering(test)
-  {
-    testRules(
-      test,
-      ["/ads.jpg", "@@example.com", "test.com#@#foo", "##bar"],
-      ["block", "allow"],
-      rules => rules.map(rule => rule.action.type)
-    );
-    testRules(
-      test,
-      ["@@example.com", "##bar", "/ads.jpg", "test.com#@#foo"],
-      ["block", "allow"],
-      rules => rules.map(rule => rule.action.type)
-    );
 
     test.done();
   },
@@ -255,6 +256,9 @@ exports.generateRules = {
     testRules(test, ["||🐈"], []);
     testRules(test, ["🐈$domain=🐈.cat"], []);
     testRules(test, ["🐈%F0%9F%90%88$domain=🐈.cat"], []);
+
+    // Regexp matching
+    testRules(test, ["/\\.foo\\.com/.*[a-zA-Z0-9]{4}/"], []);
 
     test.done();
   },

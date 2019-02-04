@@ -31,7 +31,7 @@ generated file by hand.
 
 ## Usage
 
-Create a chrome.declarativeNetRequest rule list `output.json` from the Adblock Plus filter list `input.txt`:
+Create a `chrome.declarativeNetRequest` rule list `output.json` from the Adblock Plus filter list `input.txt`:
 ```
 node abp2chromerules.js < input.txt > output.json
 ```
@@ -49,7 +49,7 @@ npm test
 
 You can lint the code using [ESLint](http://eslint.org):
 
-    eslint lib/*.js test/*.js
+    npm run lint
 
 _Note: You'll need to install the [eslint-config-eyeo][1] configuration first._
 
