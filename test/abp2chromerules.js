@@ -23,6 +23,7 @@ const {generateRules} = require("../lib/abp2chromerules.js");
 function testRules(test, filters, expected, transformFunction)
 {
   let rules = generateRules(filters.map(Filter.fromText));
+
   if (transformFunction)
     rules = transformFunction(rules);
 
@@ -257,6 +258,9 @@ exports.generateRules = {
     testRules(test, ["🐈$domain=🐈.cat"], []);
     testRules(test, ["🐈%F0%9F%90%88$domain=🐈.cat"], []);
 
+    // Invalid filter option
+    testRules(test, ["||test.com$match_case"], []);
+
     // Regexp matching
     testRules(test, ["/\\.foo\\.com/.*[a-zA-Z0-9]{4}/"], []);
 
@@ -272,15 +276,15 @@ exports.generateRules = {
 
     testRules(test, ["||test.com"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-    testRules(test, ["||test.com$match_case"], undefined,
+    testRules(test, ["||test.com$match-case"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
     testRules(test, ["||test.com/foo"], false,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-    testRules(test, ["||test.com/foo$match_case"], undefined,
+    testRules(test, ["||test.com/foo$match-case"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
     testRules(test, ["||test.com/Foo"], false,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-    testRules(test, ["||test.com/Foo$match_case"], undefined,
+    testRules(test, ["||test.com/Foo$match-case"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
 
     // Test subdomain exceptions.
