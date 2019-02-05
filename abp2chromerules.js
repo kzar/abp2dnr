@@ -42,8 +42,11 @@ rl.on("close", () =>
   // each rule individually.
   console.log("[");
 
-  for (let i = 0; i < rules.length - 1; i++)
-    console.log(JSON.stringify(rules[i], null, "\t") + ",");
-  console.log(JSON.stringify(rules[rules.length - 1], null, "\t"));
+  if (rules.length)
+  {
+    for (let i = 0; i < rules.length - 1; i++)
+      console.log(JSON.stringify(rules[i], null, "\t") + ",");
+    console.log(JSON.stringify(rules[rules.length - 1], null, "\t"));
+  }
   console.log("]");
 });

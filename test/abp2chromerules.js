@@ -264,6 +264,13 @@ exports.generateRules = {
     // Regexp matching
     testRules(test, ["/\\.foo\\.com/.*[a-zA-Z0-9]{4}/"], []);
 
+    // Content filters
+    testRules(test, ["test.com#?#.s-result-item:-abp-has(h5.s-sponsored-header)"], []);
+    testRules(test, ["test.com#$#abort-on-property-read atob"], []);
+
+    // No filters...
+    testRules(test, [], []);
+
     test.done();
   },
 
