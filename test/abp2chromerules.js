@@ -166,6 +166,38 @@ exports.generateRules = {
       }
     ]);
 
+    testRules(test, ["@@https://a.com$document",
+                     "@@https://b.com$document",
+                     "@@https://c.com$document",
+                     "@@https://d.com$document",
+                     "@@https://e.com$document"], [
+      {
+        id: 1,
+        condition: {
+          domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
+        },
+        action: {type: "allow"}
+      }
+    ]);
+    testRules(test, ["@@https://a.com*$document",
+                     "@@https://b.com^$document",
+                     "@@https://c.com?$document",
+                     "@@https://d.com/$document",
+                     "@@https://e.com|$document"], [
+      {
+        id: 1,
+        condition: {
+          domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
+        },
+        action: {type: "allow"}
+      }
+    ]);
+    testRules(test, ["@@https://a.com*/$document",
+                     "@@https://b.com^a$document",
+                     "@@https://c.com?A$document",
+                     "@@https://d.com/1$document",
+                     "@@https://e.com|2$document"], []);
+
     test.done();
   },
 
