@@ -170,28 +170,32 @@ exports.generateRules = {
                      "@@https://b.com$document",
                      "@@https://c.com$document",
                      "@@https://d.com$document",
-                     "@@https://e.com$document"], [
-      {
-        id: 1,
-        condition: {
-          domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
-        },
-        action: {type: "allow"}
-      }
-    ]);
+                     "@@https://e.com$document"],
+      [
+        {
+          id: 1,
+          condition: {
+            domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
+          },
+          action: {type: "allow"}
+        }
+      ]
+    );
     testRules(test, ["@@https://a.com*$document",
                      "@@https://b.com^$document",
                      "@@https://c.com?$document",
                      "@@https://d.com/$document",
-                     "@@https://e.com|$document"], [
-      {
-        id: 1,
-        condition: {
-          domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
-        },
-        action: {type: "allow"}
-      }
-    ]);
+                     "@@https://e.com|$document"],
+      [
+        {
+          id: 1,
+          condition: {
+            domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
+          },
+          action: {type: "allow"}
+        }
+      ]
+    );
     testRules(test, ["@@https://a.com*/$document",
                      "@@https://b.com^a$document",
                      "@@https://c.com?A$document",
@@ -247,12 +251,18 @@ exports.generateRules = {
        ["websocket"],
        ["ping"],
        ["sub_frame"],
-       ["other", "csp_report"],
+       ["csp_report", "other"],
        ["image"],
-       ["script", "ping"],
-       ["stylesheet", "script", "font", "media", "object", "xmlhttprequest",
-        "websocket", "ping", "sub_frame", "other", "csp_report"]],
-      rules => rules.map(rule => rule.condition["resourceTypes"])
+       ["ping", "script"],
+       ["csp_report", "font", "media", "object", "other", "ping", "script",
+        "stylesheet", "sub_frame", "websocket", "xmlhttprequest"]],
+      rules => rules.map(
+        rule =>
+        {
+          let resourceTypes = rule.condition.resourceTypes;
+          return resourceTypes && resourceTypes.sort();
+        }
+      )
     );
 
     test.done();
@@ -297,7 +307,9 @@ exports.generateRules = {
     testRules(test, ["/\\.foo\\.com/.*[a-zA-Z0-9]{4}/"], []);
 
     // Content filters
-    testRules(test, ["test.com#?#.s-result-item:-abp-has(h5.s-sponsored-header)"], []);
+    testRules(
+      test, ["test.com#?#.s-result-item:-abp-has(h5.s-sponsored-header)"], []
+    );
     testRules(test, ["test.com#$#abort-on-property-read atob"], []);
 
     // No filters...
@@ -326,6 +338,18 @@ exports.generateRules = {
     testRules(test, ["||test.com/Foo$match-case"], undefined,
               rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
 
+    testRules(
+      test, ["/Foo$domain=Domain.com", "/Foo$match-case,domain=Domain.com",
+             "||fOO.com", "||fOO.com$match-case"],
+      [{urlFilter: "/foo",
+        isUrlFilterCaseSensitive: false,
+        domains: ["domain.com"]},
+       {urlFilter: "/Foo", domains: ["domain.com"]},
+       {urlFilter: "||foo.com"},
+       {urlFilter: "||foo.com"}],
+       rules => rules.map(rule => rule["condition"])
+    );
+
     // Test subdomain exceptions.
     testRules(test, ["1$domain=foo.com|~bar.foo.com"], [
       {
@@ -337,6 +361,68 @@ exports.generateRules = {
           excludedDomains: ["bar.foo.com"]
         },
         action: {type: "block"}
+      }
+    ]);
+
+    test.done();
+  },
+
+  testRewrite(test)
+  {
+    testRules(test, ["/(server.com/assets/file.php)?.*$/$rewrite=$1"], []);
+    testRules(
+      test, ["/(server.com/assets/file.php)?.*$/$rewrite=https://test.com"], []
+    );
+    testRules(test, ["foo$rewrite=$1"], []);
+    testRules(
+      test,
+      ["||example.com/ad.js$script,domain=foo.com,rewrite=abp-resource:foo"],
+      []
+    );
+
+    // We can't perform relative redirections.
+    testRules(
+      test, ["||foo.com/news.css$stylesheet,domain=foo.com,rewrite=foo.css"], []
+    );
+
+    testRules(
+      test,
+      ["||bar.com/ad.js$script,domain=foo.com,rewrite=abp-resource:blank-js"],
+      [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||bar.com/ad.js",
+            isUrlFilterCaseSensitive: false,
+            domains: ["foo.com"],
+            resourceTypes: ["script"]
+          },
+          action: {
+            type: "redirect",
+            redirectUrl: "data:application/javascript,"
+          }
+        }
+      ]
+    );
+
+    testRules(test, ["foo$rewrite=http://google.com"], [
+      {
+        id: 1,
+        priority: 1,
+        condition: {
+          urlFilter: "foo",
+          isUrlFilterCaseSensitive: false,
+          // script, subdocument and object content types get stripped by the
+          // core code for security reasons. So these are what's left.
+          resourceTypes: ["other", "csp_report", "image", "stylesheet",
+                          "websocket", "ping", "xmlhttprequest", "media",
+                          "font"]
+        },
+        action: {
+          type: "redirect",
+          redirectUrl: "http://google.com"
+        }
       }
     ]);
 

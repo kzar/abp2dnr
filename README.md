@@ -30,13 +30,12 @@ You can lint the code by typing this command:
 
 ## filterClasses.js
 
-The filterClasses (also common and coreUtils) in `node_modules/filterClasses.js`
+The filterClasses (also common, coreUtils and resources) in `node_modules/filterClasses.js`
 are taken from the `adblockpluscore` repository, with small modifications made.
 
 If you need to refresh those files, run these commands (adjusting the paths as appropriate):
 
-```
-cp adblockpluscore/lib/common.js ../abp2blocklist/node_modules/
-cp adblockpluscore/lib/coreUtils.js ../abp2blocklist/node_modules/
-grep -vi filterNotifier adblockpluscore/lib/filterClasses.js > abp2chromerules/node_modules/filterClasses.js
-```
+    cp adblockpluscore/data/resources.json ../abp2blocklist/node_modules/
+    cp adblockpluscore/lib/common.js ../abp2blocklist/node_modules/
+    cp adblockpluscore/lib/coreUtils.js ../abp2blocklist/node_modules/
+    grep -vi filterNotifier adblockpluscore/lib/filterClasses.js > abp2chromerules/node_modules/filterClasses.js
