@@ -23,7 +23,7 @@
 
 const {extend} = require("./coreUtils");
 const {filterToRegExp} = require("./common");
-const resources = require("./resources.json");
+const resources = require("../data/resources.json");
 
 /**
  * Map of internal resources for URL rewriting.

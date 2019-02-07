@@ -20,7 +20,7 @@
 "use strict";
 
 let readline = require("readline");
-let Filter = require("filterClasses").Filter;
+let {Filter} = require("./adblockpluscore/lib/filterClasses");
 let {generateRules} = require("./lib/abp2chromerules.js");
 
 let rl = readline.createInterface({input: process.stdin, terminal: false});

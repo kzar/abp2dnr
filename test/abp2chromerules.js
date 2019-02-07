@@ -17,7 +17,7 @@
 
 "use strict";
 
-const {Filter} = require("filterClasses");
+const {Filter} = require("../adblockpluscore/lib/filterClasses");
 const {generateRules} = require("../lib/abp2chromerules.js");
 
 function testRules(test, filters, expected, transformFunction)
