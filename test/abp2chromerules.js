@@ -340,13 +340,18 @@ exports.generateRules = {
 
     testRules(
       test, ["/Foo$domain=Domain.com", "/Foo$match-case,domain=Domain.com",
-             "||fOO.com", "||fOO.com$match-case"],
+             "||fOO.com", "||fOO.com$match-case",
+             "||fOO.com/1", "||fOO.com/A", "||fOO.com/A$match-case"],
       [{urlFilter: "/foo",
         isUrlFilterCaseSensitive: false,
         domains: ["domain.com"]},
        {urlFilter: "/Foo", domains: ["domain.com"]},
        {urlFilter: "||foo.com"},
-       {urlFilter: "||foo.com"}],
+       {urlFilter: "||foo.com"},
+       {urlFilter: "||foo.com/1"},
+       {urlFilter: "||foo.com/a", isUrlFilterCaseSensitive: false},
+       {urlFilter: "||foo.com/A"}
+      ],
        rules => rules.map(rule => rule["condition"])
     );
 
