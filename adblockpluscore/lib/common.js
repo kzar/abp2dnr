@@ -15,6 +15,8 @@
  * along with Adblock Plus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @module */
+
 "use strict";
 
 /**
@@ -22,12 +24,10 @@
  * @param {string} text the string to convert
  * @return {string} regular expression representation of the text
  */
-function textToRegExp(text)
+exports.textToRegExp = function textToRegExp(text)
 {
   return text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
-}
-
-exports.textToRegExp = textToRegExp;
+};
 
 /**
  * Converts filter text into regular expression string
@@ -37,7 +37,7 @@ exports.textToRegExp = textToRegExp;
  *   trailing wildcards are stripped out
  * @return {string} regular expression representation of filter text
  */
-function filterToRegExp(text, captureAll = false)
+exports.filterToRegExp = function filterToRegExp(text, captureAll = false)
 {
   // remove multiple wildcards
   text = text.replace(/\*+/g, "*");
@@ -69,11 +69,9 @@ function filterToRegExp(text, captureAll = false)
     .replace(/^\\\|/, "^")
     // process anchor at expression end
     .replace(/\\\|$/, "$");
-}
+};
 
-exports.filterToRegExp = filterToRegExp;
-
-function splitSelector(selector)
+let splitSelector = exports.splitSelector = function splitSelector(selector)
 {
   if (!selector.includes(","))
     return [selector];
@@ -109,9 +107,7 @@ function splitSelector(selector)
 
   selectors.push(selector.substring(start));
   return selectors;
-}
-
-exports.splitSelector = splitSelector;
+};
 
 function findTargetSelectorIndex(selector)
 {
@@ -191,9 +187,13 @@ function findTargetSelectorIndex(selector)
  * @param {string} qualifier The qualifier with which to qualify the selector.
  * @returns {string} The qualified selector.
  */
-function qualifySelector(selector, qualifier)
+exports.qualifySelector = function qualifySelector(selector, qualifier)
 {
   let qualifiedSelector = "";
+
+  let qualifierTargetSelectorIndex = findTargetSelectorIndex(qualifier);
+  let [, qualifierType = ""] =
+    /^([a-z][a-z-]*)?/i.exec(qualifier.substring(qualifierTargetSelectorIndex));
 
   for (let sub of splitSelector(selector))
   {
@@ -202,15 +202,25 @@ function qualifySelector(selector, qualifier)
     qualifiedSelector += ", ";
 
     let index = findTargetSelectorIndex(sub);
-    let [, type = "", rest] = /^([a-z][a-z-]*)?(.*)/i.exec(sub.substr(index));
 
     // Note that the first group in the regular expression is optional. If it
     // doesn't match (e.g. "#foo::nth-child(1)"), type will be an empty string.
-    qualifiedSelector += sub.substr(0, index) + type + qualifier + rest;
+    let [, type = "", rest] =
+      /^([a-z][a-z-]*)?\*?(.*)/i.exec(sub.substring(index));
+
+    if (type == qualifierType)
+      type = "";
+
+    // If the qualifier ends in a combinator (e.g. "body #foo>"), we put the
+    // type and the rest of the selector after the qualifier
+    // (e.g. "body #foo>div.bar"); otherwise (e.g. "body #foo") we merge the
+    // type into the qualifier (e.g. "body div#foo.bar").
+    if (/[\s>+~]$/.test(qualifier))
+      qualifiedSelector += sub.substring(0, index) + qualifier + type + rest;
+    else
+      qualifiedSelector += sub.substring(0, index) + type + qualifier + rest;
   }
 
   // Remove the initial comma and space.
-  return qualifiedSelector.substr(2);
-}
-
-exports.qualifySelector = qualifySelector;
+  return qualifiedSelector.substring(2);
+};

@@ -35,6 +35,9 @@ those files are inside the adblockpluscore directory.
 
 If you need to refresh those files, run these commands (adjusting the paths as appropriate):
 
+    cp adblockpluscore/lib/url.js abp2chromerules/adblockpluscore/lib/
+    cp adblockpluscore/lib/contentTypes.js abp2chromerules/adblockpluscore/lib/
+    cp adblockpluscore/data/publicSuffixList.json abp2chromerules/adblockpluscore/data/
     cp adblockpluscore/data/resources.json abp2chromerules/adblockpluscore/data/
     cp adblockpluscore/lib/common.js abp2chromerules/adblockpluscore/lib/
     cp adblockpluscore/lib/coreUtils.js abp2chromerules/adblockpluscore/lib/

@@ -15,6 +15,8 @@
  * along with Adblock Plus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @module */
+
 "use strict";
 
 function desc(properties)
@@ -34,24 +36,3 @@ function extend(cls, properties)
   return Object.create(cls.prototype, desc(properties));
 }
 exports.extend = extend;
-
-function findIndex(iterable, callback, thisArg)
-{
-  let index = 0;
-  for (let item of iterable)
-  {
-    if (callback.call(thisArg, item))
-      return index;
-
-    index++;
-  }
-
-  return -1;
-}
-exports.findIndex = findIndex;
-
-function indexOf(iterable, searchElement)
-{
-  return findIndex(iterable, item => item === searchElement);
-}
-exports.indexOf = indexOf;
