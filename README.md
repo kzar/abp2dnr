@@ -27,18 +27,3 @@ Unit tests live in the `tests/` directory. You can run them by typing this comma
 You can lint the code by typing this command:
 
     npm run lint
-
-## Adblock Plus core code
-
-To parse the Adblock Plus filters, we reuse parts of the core Adblock Plus code,
-those files are inside the adblockpluscore directory.
-
-If you need to refresh those files, run these commands (adjusting the paths as appropriate):
-
-    cp adblockpluscore/lib/url.js abp2chromerules/adblockpluscore/lib/
-    cp adblockpluscore/lib/contentTypes.js abp2chromerules/adblockpluscore/lib/
-    cp adblockpluscore/data/publicSuffixList.json abp2chromerules/adblockpluscore/data/
-    cp adblockpluscore/data/resources.json abp2chromerules/adblockpluscore/data/
-    cp adblockpluscore/lib/common.js abp2chromerules/adblockpluscore/lib/
-    cp adblockpluscore/lib/coreUtils.js abp2chromerules/adblockpluscore/lib/
-    grep -vi filterNotifier adblockpluscore/lib/filterClasses.js > abp2chromerules/adblockpluscore/lib/filterClasses.js

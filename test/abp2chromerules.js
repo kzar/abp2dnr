@@ -19,7 +19,7 @@
 
 const assert = require("assert");
 
-const {Filter} = require("../adblockpluscore/lib/filterClasses");
+const {Filter} = require("../node_modules/adblockpluscore/lib/filterClasses");
 const {generateRules} = require("../lib/abp2chromerules.js");
 
 function testRules(filters, expected, transformFunction)

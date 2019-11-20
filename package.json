@@ -1,6 +1,9 @@
 {
   "license": "GPL-3.0",
   "repository": {},
+  "dependencies": {
+    "adblockpluscore": "git+ssh://git@github.com:adblockplus/adblockpluscore.git#ca106c5"
+  },
   "devDependencies": {
     "eslint": "6.6.0",
     "eslint-config-eyeo": "2.1.1",
