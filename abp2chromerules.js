@@ -15,38 +15,17 @@
  * along with Adblock Plus.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* eslint no-console: "off" */
-
 "use strict";
 
-let readline = require("readline");
-let {Filter} = require("./node_modules/adblockpluscore/lib/filterClasses");
-let {generateRules} = require("./lib/abp2chromerules.js");
+const {pipeline} = require("stream");
 
-let rl = readline.createInterface({input: process.stdin, terminal: false});
+const split2 = require("split2");
 
-let filters = [];
+let {generateRulesStream} = require("./index.js");
 
-rl.on("line", line =>
-{
-  if (/^\s*[^[\s]/.test(line))
-    filters.push(Filter.fromText(Filter.normalize(line)));
-});
-
-rl.on("close", () =>
-{
-  let rules = generateRules(filters);
-
-  // If the rule set is too huge, JSON.stringify throws
-  // "RangeError: Invalid string length" on Node.js. As a workaround, print
-  // each rule individually.
-  console.log("[");
-
-  if (rules.length)
-  {
-    for (let i = 0; i < rules.length - 1; i++)
-      console.log(JSON.stringify(rules[i], null, "\t") + ",");
-    console.log(JSON.stringify(rules[rules.length - 1], null, "\t"));
-  }
-  console.log("]");
-});
+pipeline(
+  process.stdin,
+  split2(),
+  generateRulesStream(),
+  process.stdout
+);
