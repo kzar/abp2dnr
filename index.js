@@ -23,12 +23,12 @@ const {StringDecoder} = require("string_decoder");
 const split2 = require("split2");
 
 const {Filter} = require("adblockpluscore/lib/filterClasses");
-const {generateRules} = require("./lib/abp2chromerules");
+const {ChromeRules} = require("./lib/abp2chromerules");
 
-function generateRulesStream(stream)
+function chromeRulesStream(stream)
 {
   let decoder = new StringDecoder("utf-8");
-  let filters = [];
+  let chromeRules = new ChromeRules();
 
   let transform = new Transform();
   transform._transform = (line, encoding, cb) =>
@@ -37,13 +37,13 @@ function generateRulesStream(stream)
       line = decoder.write(line);
 
     if (/^\s*[^[\s]/.test(line))
-      filters.push(Filter.fromText(Filter.normalize(line)));
+      chromeRules.processFilter(Filter.fromText(Filter.normalize(line)));
 
     cb(null);
   };
   transform._flush = (cb) =>
   {
-    let rules = generateRules(filters);
+    let rules = chromeRules.generateRules();
     let output = [];
 
     // If the rule set is too huge, JSON.stringify throws
@@ -57,16 +57,15 @@ function generateRulesStream(stream)
         output.push(JSON.stringify(rules[i], null, "\t") + ",");
       output.push(JSON.stringify(rules[rules.length - 1], null, "\t"));
     }
-    output.push("]");
 
+    output.push("]");
 
     cb(null, output.join("\n"));
   };
-
   return transform;
 }
 
-function generateRulesGulp()
+function chromeRulesGulp()
 {
   let transform = new Transform({objectMode: true});
   transform._transform = (file, encoding, cb) =>
@@ -80,12 +79,12 @@ function generateRulesGulp()
     }
 
     file.contents = stream.pipe(split2())
-                          .pipe(generateRulesStream());
+                          .pipe(chromeRulesStream());
     cb(null, file);
   };
   return transform;
 }
 
-exports.generateRules = generateRules;
-exports.generateRulesStream = generateRulesStream;
-exports.generateRulesGulp = generateRulesGulp;
+exports.ChromeRules = ChromeRules;
+exports.chromeRulesStream = chromeRulesStream;
+exports.chromeRulesGulp = chromeRulesGulp;

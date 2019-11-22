@@ -20,11 +20,14 @@
 const assert = require("assert");
 
 const {Filter} = require("adblockpluscore/lib/filterClasses");
-const {generateRules} = require("../lib/abp2chromerules.js");
+const {ChromeRules} = require("../lib/abp2chromerules.js");
 
 function testRules(filters, expected, transformFunction)
 {
-  let rules = generateRules(filters.map(Filter.fromText));
+  let chromeRules = new ChromeRules();
+  for (let filter of filters)
+    chromeRules.processFilter(Filter.fromText(filter));
+  let rules = chromeRules.generateRules();
 
   if (transformFunction)
     rules = transformFunction(rules);
@@ -32,7 +35,7 @@ function testRules(filters, expected, transformFunction)
   assert.deepEqual(rules, expected);
 }
 
-describe("generateRules", function()
+describe("ChromeRules", function()
 {
   describe("Request filters", function()
   {
