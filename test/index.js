@@ -27,6 +27,7 @@ const exampleRules = [{
   action: {
     type: "block"
   },
+  priority: 1,
   condition: {
     isUrlFilterCaseSensitive: false,
     urlFilter: "ab"
@@ -36,6 +37,7 @@ const exampleRules = [{
   action: {
     type: "block"
   },
+  priority: 1,
   condition: {
     isUrlFilterCaseSensitive: false,
     urlFilter: "cd"

@@ -46,6 +46,7 @@ describe("ChromeRules", function()
       testRules(["||example.com"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "||example.com"
           },
@@ -58,6 +59,7 @@ describe("ChromeRules", function()
       ], [true, true, true, true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "/foo",
             isUrlFilterCaseSensitive: false
@@ -66,6 +68,7 @@ describe("ChromeRules", function()
         },
         {
           id: 2,
+          priority: 1,
           condition: {
             urlFilter: "||test.com^"
           },
@@ -73,6 +76,7 @@ describe("ChromeRules", function()
         },
         {
           id: 3,
+          priority: 1,
           condition: {
             urlFilter: "http://example.com/foo",
             isUrlFilterCaseSensitive: false
@@ -81,6 +85,7 @@ describe("ChromeRules", function()
         },
         {
           id: 4,
+          priority: 1,
           condition: {
             urlFilter: "^foo^",
             isUrlFilterCaseSensitive: false
@@ -103,6 +108,7 @@ describe("ChromeRules", function()
       testRules(["@@example.com"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "example.com",
             isUrlFilterCaseSensitive: false
@@ -116,6 +122,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "||example.com"
           },
@@ -131,6 +138,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com^$document"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             domains: ["example.com"]
           },
@@ -140,6 +148,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com^$document,image"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             domains: ["example.com"]
           },
@@ -147,6 +156,7 @@ describe("ChromeRules", function()
         },
         {
           id: 2,
+          priority: 1,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["image"]
@@ -159,6 +169,7 @@ describe("ChromeRules", function()
       [
         {
           id: 1,
+          priority: 1,
           condition: {
             domains: ["bar.com", "foo.com"]
           },
@@ -166,6 +177,7 @@ describe("ChromeRules", function()
         },
         {
           id: 2,
+          priority: 1,
           condition: {
             urlFilter: "||bar.com^",
             resourceTypes: ["image"]
@@ -180,6 +192,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com/path^$font,document"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "||example.com/path^",
             isUrlFilterCaseSensitive: false,
@@ -201,6 +214,7 @@ describe("ChromeRules", function()
         [
           {
             id: 1,
+            priority: 1,
             condition: {
               domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
             },
@@ -217,6 +231,7 @@ describe("ChromeRules", function()
         [
           {
             id: 1,
+            priority: 1,
             condition: {
               domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
             },
@@ -433,6 +448,7 @@ describe("ChromeRules", function()
       testRules(["1$domain=foo.com|~bar.foo.com"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "1",
             isUrlFilterCaseSensitive: false,
@@ -507,6 +523,7 @@ describe("ChromeRules", function()
       testRules(["foo$websocket"], [true], [
         {
           id: 1,
+          priority: 1,
           condition: {
             urlFilter: "foo",
             isUrlFilterCaseSensitive: false,
