@@ -22,7 +22,8 @@ const assert = require("assert");
 const {Filter} = require("adblockpluscore/lib/filterClasses");
 const {ChromeRules} = require("../lib/abp2chromerules.js");
 
-function testRules(filters, expectedProcessReturn, expected, transformFunction)
+function testRules(filters, expectedProcessReturn,
+                   expected, transformFunction, ruleOffset)
 {
   let processReturn = [];
   let chromeRules = new ChromeRules();
@@ -31,7 +32,7 @@ function testRules(filters, expectedProcessReturn, expected, transformFunction)
 
   assert.deepEqual(processReturn, expectedProcessReturn);
 
-  let rules = chromeRules.generateRules();
+  let rules = chromeRules.generateRules(ruleOffset);
   if (transformFunction)
     rules = transformFunction(rules);
   assert.deepEqual(rules, expected);
@@ -532,6 +533,20 @@ describe("ChromeRules", function()
           action: {type: "block"}
         }
       ]);
+    });
+  });
+
+  describe("Rule offset", function()
+  {
+    let filters = ["||example.com", "||foo.com"];
+    let getIds = rules => rules.map(rule => rule.id);
+
+    it("should honour the firstId parameter", function()
+    {
+      testRules(filters, [true, true], [1, 2], getIds);
+      testRules(filters, [true, true], [1, 2], getIds, 1);
+      testRules(filters, [true, true], [2, 3], getIds, 2);
+      testRules(filters, [true, true], [1000, 1001], getIds, 1000);
     });
   });
 });
