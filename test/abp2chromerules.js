@@ -114,7 +114,8 @@ describe("ChromeRules", function()
             urlFilter: "example.com",
             isUrlFilterCaseSensitive: false
           },
-          action: {type: "allow"}}
+          action: {type: "allow"}
+        }
       ]);
     });
 
@@ -127,7 +128,8 @@ describe("ChromeRules", function()
           condition: {
             urlFilter: "||example.com"
           },
-          action: {type: "allow"}}
+          action: {type: "allow"}
+        }
       ]);
     });
   });
@@ -141,9 +143,10 @@ describe("ChromeRules", function()
           id: 1,
           priority: 1,
           condition: {
-            domains: ["example.com"]
+            urlFilter: "||example.com^",
+            resourceTypes: ["main_frame"]
           },
-          action: {type: "allow"}
+          action: {type: "allowAllRequests"}
         }
       ]);
       testRules(["@@||example.com^$document,image"], [true], [
@@ -151,9 +154,10 @@ describe("ChromeRules", function()
           id: 1,
           priority: 1,
           condition: {
-            domains: ["example.com"]
+            urlFilter: "||example.com^",
+            resourceTypes: ["main_frame"]
           },
-          action: {type: "allow"}
+          action: {type: "allowAllRequests"}
         },
         {
           id: 2,
@@ -172,9 +176,10 @@ describe("ChromeRules", function()
             id: 1,
             priority: 1,
             condition: {
-              domains: ["bar.com", "foo.com"]
+              urlFilter: "||bar.com^",
+              resourceTypes: ["main_frame"]
             },
-            action: {type: "allow"}
+            action: {type: "allowAllRequests"}
           },
           {
             id: 2,
@@ -184,6 +189,15 @@ describe("ChromeRules", function()
               resourceTypes: ["image"]
             },
             action: {type: "allow"}
+          },
+          {
+            id: 3,
+            priority: 1,
+            condition: {
+              urlFilter: "||foo.com^",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
           }
         ]
       );
@@ -191,7 +205,7 @@ describe("ChromeRules", function()
 
     it("should generate whitelisting rules for URLs", function()
     {
-      testRules(["@@||example.com/path^$font,document"], [true], [
+      testRules(["@@||example.com/path^$font"], [true], [
         {
           id: 1,
           priority: 1,
@@ -199,6 +213,83 @@ describe("ChromeRules", function()
             urlFilter: "||example.com/path^",
             isUrlFilterCaseSensitive: false,
             resourceTypes: ["font"]
+          },
+          action: {type: "allow"}
+        }
+      ]);
+    });
+
+    it("should generate allowAllRequest whitelisting rules", function()
+    {
+      testRules(["@@||example.com/path$document"], [true], [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||example.com/path",
+            isUrlFilterCaseSensitive: false,
+            resourceTypes: ["main_frame"]
+          },
+          action: {type: "allowAllRequests"}
+        }
+      ]);
+
+      testRules(["@@||example.com/path$subdocument"], [true], [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||example.com/path",
+            isUrlFilterCaseSensitive: false,
+            resourceTypes: ["sub_frame"]
+          },
+          action: {type: "allow"}
+        }
+      ]);
+
+      testRules(["@@||example.com/path$document,subdocument"], [true], [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||example.com/path",
+            isUrlFilterCaseSensitive: false,
+            resourceTypes: ["main_frame", "sub_frame"]
+          },
+          action: {type: "allowAllRequests"}
+        }
+      ]);
+
+      testRules(["@@||example.com$document,subdocument"], [true], [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||example.com",
+            resourceTypes: ["main_frame", "sub_frame"]
+          },
+          action: {type: "allowAllRequests"}
+        }
+      ]);
+
+      testRules(["@@||example.com"], [true], [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||example.com"
+          },
+          action: {type: "allow"}
+        }
+      ]);
+
+      testRules(["@@||example.com/path"], [true], [
+        {
+          id: 1,
+          priority: 1,
+          condition: {
+            urlFilter: "||example.com/path",
+            isUrlFilterCaseSensitive: false
           },
           action: {type: "allow"}
         }
@@ -218,9 +309,46 @@ describe("ChromeRules", function()
             id: 1,
             priority: 1,
             condition: {
-              domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
+              urlFilter: "https://a.com",
+              resourceTypes: ["main_frame"]
             },
-            action: {type: "allow"}
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 2,
+            priority: 1,
+            condition: {
+              urlFilter: "https://b.com",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 3,
+            priority: 1,
+            condition: {
+              urlFilter: "https://c.com",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 4,
+            priority: 1,
+            condition: {
+              urlFilter: "https://d.com",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 5,
+            priority: 1,
+            condition: {
+              urlFilter: "https://e.com",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
           }
         ]
       );
@@ -235,18 +363,104 @@ describe("ChromeRules", function()
             id: 1,
             priority: 1,
             condition: {
-              domains: ["a.com", "b.com", "c.com", "d.com", "e.com"]
+              urlFilter: "https://a.com",
+              resourceTypes: ["main_frame"]
             },
-            action: {type: "allow"}
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 2,
+            priority: 1,
+            condition: {
+              urlFilter: "https://b.com^",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 3,
+            priority: 1,
+            condition: {
+              urlFilter: "https://c.com?",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 4,
+            priority: 1,
+            condition: {
+              urlFilter: "https://d.com/",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 5,
+            priority: 1,
+            condition: {
+              urlFilter: "https://e.com|",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
           }
         ]
       );
-      testRules(["@@https://a.com*/$document",
-                 "@@https://b.com^a$document",
-                 "@@https://c.com?A$document",
-                 "@@https://d.com/1$document",
-                 "@@https://e.com|2$document"],
-                 [true, true, true, true, true], []);
+      testRules(
+        ["@@https://a.com*/$document", "@@https://b.com^a$document",
+         "@@https://c.com?A$document", "@@https://d.com/1$document",
+         "@@https://e.com|2$document"],
+         [true, true, true, true, true],
+        [
+          {
+            id: 1,
+            priority: 1,
+            condition: {
+              urlFilter: "https://a.com*/",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 2,
+            priority: 1,
+            condition: {
+              urlFilter: "https://b.com^a",
+              resourceTypes: ["main_frame"],
+              isUrlFilterCaseSensitive: false
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 3,
+            priority: 1,
+            condition: {
+              urlFilter: "https://c.com?a",
+              resourceTypes: ["main_frame"],
+              isUrlFilterCaseSensitive: false
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 4,
+            priority: 1,
+            condition: {
+              urlFilter: "https://d.com/1",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          },
+          {
+            id: 5,
+            priority: 1,
+            condition: {
+              urlFilter: "https://e.com|2",
+              resourceTypes: ["main_frame"]
+            },
+            action: {type: "allowAllRequests"}
+          }
+        ]
+      );
     });
   });
 
@@ -274,7 +488,7 @@ describe("ChromeRules", function()
                                     rule.condition["excludedDomains"]]));
 
       testRules(
-        ["^ad.jpg|", "@@||example.com^$genericblock", "@@ad.jpg"],
+        ["^ad.jpg|", "@@||example.com^$genericblock", "@@ad.jpg$image"],
         [true, true, true],
         [[undefined, ["example.com"]], [undefined, undefined]],
         rules => rules.map(rule => [rule.condition["domains"],
@@ -324,6 +538,11 @@ describe("ChromeRules", function()
 
   describe("Unsupported filters", function()
   {
+    it("should ignore comment filters", function()
+    {
+      testRules(["! this is a comment"], [false], []);
+    });
+
     it("should ignore $sitekey filters", function()
     {
       testRules(["foo$sitekey=bar"], [false], []);
