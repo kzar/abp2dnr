@@ -165,27 +165,28 @@ describe("ChromeRules", function()
           action: {type: "allow"}
         }
       ]);
-      testRules(["@@||bar.com^$document,image", "@@||foo.com^$document"],
-                [true, true],
-      [
-        {
-          id: 1,
-          priority: 1,
-          condition: {
-            domains: ["bar.com", "foo.com"]
+      testRules(
+        ["@@||bar.com^$document,image", "@@||foo.com^$document"],
+        [true, true], [
+          {
+            id: 1,
+            priority: 1,
+            condition: {
+              domains: ["bar.com", "foo.com"]
+            },
+            action: {type: "allow"}
           },
-          action: {type: "allow"}
-        },
-        {
-          id: 2,
-          priority: 1,
-          condition: {
-            urlFilter: "||bar.com^",
-            resourceTypes: ["image"]
-          },
-          action: {type: "allow"}
-        }
-      ]);
+          {
+            id: 2,
+            priority: 1,
+            condition: {
+              urlFilter: "||bar.com^",
+              resourceTypes: ["image"]
+            },
+            action: {type: "allow"}
+          }
+        ]
+      );
     });
 
     it("should generate whitelisting rules for URLs", function()
