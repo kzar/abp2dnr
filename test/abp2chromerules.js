@@ -26,7 +26,13 @@ function testRules(filters, expectedProcessReturn,
                    expected, transformFunction, ruleOffset)
 {
   let processReturn = [];
-  let chromeRules = new ChromeRules();
+  let chromeRules;
+
+  if (ruleOffset)
+    chromeRules = new ChromeRules(ruleOffset);
+  else
+    chromeRules = new ChromeRules();
+
   for (let filter of filters)
     processReturn.push(chromeRules.processFilter(Filter.fromText(filter)));
 
@@ -44,7 +50,7 @@ describe("ChromeRules", function()
   {
     it("should generate request blocking rules", function()
     {
-      testRules(["||example.com"], [true], [
+      testRules(["||example.com"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -57,7 +63,7 @@ describe("ChromeRules", function()
 
       testRules([
         "/foo", "||test.com^", "http://example.com/foo", "^foo^"
-      ], [true, true, true, true], [
+      ], [[1], [2], [3], [4]], [
         {
           id: 1,
           priority: 1,
@@ -106,7 +112,7 @@ describe("ChromeRules", function()
   {
     it("should generate case-insensitive whitelisting filters", function()
     {
-      testRules(["@@example.com"], [true], [
+      testRules(["@@example.com"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -121,7 +127,7 @@ describe("ChromeRules", function()
 
     it("should generate case sensitive whitelisting filters", function()
     {
-      testRules(["@@||example.com"], [true], [
+      testRules(["@@||example.com"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -138,7 +144,7 @@ describe("ChromeRules", function()
   {
     it("should generate domain whitelisting rules", function()
     {
-      testRules(["@@||example.com^$document"], [true], [
+      testRules(["@@||example.com^$document"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -149,7 +155,7 @@ describe("ChromeRules", function()
           action: {type: "allowAllRequests"}
         }
       ]);
-      testRules(["@@||example.com^$document,image"], [true], [
+      testRules(["@@||example.com^$document,image"], [[1, 2]], [
         {
           id: 1,
           priority: 1,
@@ -171,7 +177,7 @@ describe("ChromeRules", function()
       ]);
       testRules(
         ["@@||bar.com^$document,image", "@@||foo.com^$document"],
-        [true, true], [
+        [[1, 2], [3]], [
           {
             id: 1,
             priority: 1,
@@ -205,7 +211,7 @@ describe("ChromeRules", function()
 
     it("should generate whitelisting rules for URLs", function()
     {
-      testRules(["@@||example.com/path^$font"], [true], [
+      testRules(["@@||example.com/path^$font"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -221,7 +227,7 @@ describe("ChromeRules", function()
 
     it("should generate allowAllRequest whitelisting rules", function()
     {
-      testRules(["@@||example.com/path$document"], [true], [
+      testRules(["@@||example.com/path$document"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -234,7 +240,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com/path$subdocument"], [true], [
+      testRules(["@@||example.com/path$subdocument"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -247,7 +253,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com/path$document,subdocument"], [true], [
+      testRules(["@@||example.com/path$document,subdocument"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -260,7 +266,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com$document,subdocument"], [true], [
+      testRules(["@@||example.com$document,subdocument"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -272,7 +278,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com"], [true], [
+      testRules(["@@||example.com"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -283,7 +289,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com/path"], [true], [
+      testRules(["@@||example.com/path"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -303,7 +309,7 @@ describe("ChromeRules", function()
                  "@@https://c.com$document",
                  "@@https://d.com$document",
                  "@@https://e.com$document"],
-                [true, true, true, true, true],
+                [[1], [2], [3], [4], [5]],
         [
           {
             id: 1,
@@ -357,7 +363,7 @@ describe("ChromeRules", function()
                  "@@https://c.com?$document",
                  "@@https://d.com/$document",
                  "@@https://e.com|$document"],
-                [true, true, true, true, true],
+                [[1], [2], [3], [4], [5]],
         [
           {
             id: 1,
@@ -410,7 +416,7 @@ describe("ChromeRules", function()
         ["@@https://a.com*/$document", "@@https://b.com^a$document",
          "@@https://c.com?A$document", "@@https://d.com/1$document",
          "@@https://e.com|2$document"],
-         [true, true, true, true, true],
+         [[1], [2], [3], [4], [5]],
         [
           {
             id: 1,
@@ -470,26 +476,26 @@ describe("ChromeRules", function()
     {
       testRules(
         ["^ad.jpg|", "@@||example.com^$genericblock"],
-        [true, true],
+        [[1], true],
         [[undefined, ["example.com"]]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]]));
       testRules(
         ["^ad.jpg|$domain=test.com", "@@||example.com^$genericblock"],
-        [true, true],
+        [[1], true],
         [[["test.com"], undefined]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]]));
       testRules(
         ["^ad.jpg|$domain=~test.com", "@@||example.com^$genericblock"],
-        [true, true],
+        [[1], true],
         [[undefined, ["test.com", "example.com"]]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]]));
 
       testRules(
         ["^ad.jpg|", "@@||example.com^$genericblock", "@@ad.jpg$image"],
-        [true, true, true],
+        [[1], true, [2]],
         [[undefined, ["example.com"]], [undefined, undefined]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]])
@@ -506,8 +512,8 @@ describe("ChromeRules", function()
          "7$object", "8$object_subrequest", "9$xmlhttprequest", "10$websocket",
          "11$ping", "12$subdocument", "13$other", "14$IMAGE", "15$script,PING",
          "16$~image"],
-        [true, true, true, true, true, true, true, true, true, true, true, true,
-         true, true, true, true],
+        [[1], [2], [3], [4], [5], [6], [7], [8],
+         [9], [10], [11], [12], [13], [14], [15], [16]],
         [undefined,
          ["image"],
          ["stylesheet"],
@@ -564,7 +570,7 @@ describe("ChromeRules", function()
         "@@||anothertest.com^$elemhide",
         "@@^something^$elemhide",
         "@@^anything^$generichide"
-      ], [false, false, true, true, true, true, true], []);
+      ], [false, false, false, false, false, false, false], []);
     });
 
     it("should ignore WebRTC filters", function()
@@ -618,28 +624,28 @@ describe("ChromeRules", function()
   {
     it("should honour the $domain option", function()
     {
-      testRules(["1$domain=foo.com"], [true], ["foo.com"],
+      testRules(["1$domain=foo.com"], [[1]], ["foo.com"],
                 rules => rules[0]["condition"]["domains"]);
     });
     it("should honour the $third-party option", function()
     {
-      testRules(["2$third-party"], [true], "thirdParty",
+      testRules(["2$third-party"], [[1]], "thirdParty",
                 rules => rules[0]["condition"]["domainType"]);
     });
 
     it("should honour the $match-case option", function()
     {
-      testRules(["||test.com"], [true], undefined,
+      testRules(["||test.com"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com$match-case"], [true], undefined,
+      testRules(["||test.com$match-case"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/foo"], [true], false,
+      testRules(["||test.com/foo"], [[1]], false,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/foo$match-case"], [true], undefined,
+      testRules(["||test.com/foo$match-case"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/Foo"], [true], false,
+      testRules(["||test.com/Foo"], [[1]], false,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/Foo$match-case"], [true], undefined,
+      testRules(["||test.com/Foo$match-case"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
     });
 
@@ -649,7 +655,7 @@ describe("ChromeRules", function()
         ["/Foo$domain=Domain.com", "/Foo$match-case,domain=Domain.com",
          "||fOO.com", "||fOO.com$match-case",
          "||fOO.com/1", "||fOO.com/A", "||fOO.com/A$match-case"],
-        [true, true, true, true, true, true, true],
+        [[1], [2], [3], [4], [5], [6], [7]],
         [{urlFilter: "/foo",
           isUrlFilterCaseSensitive: false,
           domains: ["domain.com"]},
@@ -666,7 +672,7 @@ describe("ChromeRules", function()
 
     it("should honour subdomain exceptions", function()
     {
-      testRules(["1$domain=foo.com|~bar.foo.com"], [true], [
+      testRules(["1$domain=foo.com|~bar.foo.com"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -688,7 +694,7 @@ describe("ChromeRules", function()
     {
       testRules(
         ["||bar.com/ad.js$script,domain=foo.com,rewrite=abp-resource:blank-js"],
-        [true],
+        [[1]],
         [
           {
             id: 1,
@@ -741,7 +747,7 @@ describe("ChromeRules", function()
   {
     it("should generate websocket blocking rules", function()
     {
-      testRules(["foo$websocket"], [true], [
+      testRules(["foo$websocket"], [[1]], [
         {
           id: 1,
           priority: 1,
@@ -763,10 +769,10 @@ describe("ChromeRules", function()
 
     it("should honour the firstId parameter", function()
     {
-      testRules(filters, [true, true], [1, 2], getIds);
-      testRules(filters, [true, true], [1, 2], getIds, 1);
-      testRules(filters, [true, true], [2, 3], getIds, 2);
-      testRules(filters, [true, true], [1000, 1001], getIds, 1000);
+      testRules(filters, [[1], [2]], [1, 2], getIds);
+      testRules(filters, [[1], [2]], [1, 2], getIds, 1);
+      testRules(filters, [[2], [3]], [2, 3], getIds, 2);
+      testRules(filters, [[1000], [1001]], [1000, 1001], getIds, 1000);
     });
   });
 });
