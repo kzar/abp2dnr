@@ -17,15 +17,57 @@
 
 "use strict";
 
-const {pipeline} = require("stream");
+const {pipeline, Transform} = require("stream");
+const {StringDecoder} = require("string_decoder");
 
+const {Filter} = require("adblockpluscore/lib/filterClasses");
 const split2 = require("split2");
 
-let {generateRulesStream} = require("./index.js");
+const {ChromeRules} = require("./lib/abp2chromerules");
+
+function chromeRulesStream(stream)
+{
+  let decoder = new StringDecoder("utf-8");
+  let chromeRules = new ChromeRules();
+
+  let transform = new Transform();
+  transform._transform = (line, encoding, cb) =>
+  {
+    if (encoding == "buffer")
+      line = decoder.write(line);
+
+    if (/^\s*[^[\s]/.test(line))
+      chromeRules.processFilter(Filter.fromText(Filter.normalize(line)));
+
+    cb(null);
+  };
+  transform._flush = (cb) =>
+  {
+    let rules = chromeRules.generateRules();
+    let output = [];
+
+    // If the rule set is too huge, JSON.stringify throws
+    // "RangeError: Invalid string length" on Node.js. As a workaround, print
+    // each rule individually.
+    output.push("[");
+
+    if (rules.length)
+    {
+      for (let i = 0; i < rules.length - 1; i++)
+        output.push(JSON.stringify(rules[i], null, "\t") + ",");
+      output.push(JSON.stringify(rules[rules.length - 1], null, "\t"));
+    }
+
+    output.push("]");
+
+    cb(null, output.join("\n"));
+  };
+  return transform;
+}
 
 pipeline(
   process.stdin,
   split2(),
-  generateRulesStream(),
+  chromeRulesStream(),
   process.stdout
 );
