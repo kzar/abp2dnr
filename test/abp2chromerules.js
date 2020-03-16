@@ -138,6 +138,16 @@ describe("ChromeRules", function()
         }
       ]);
     });
+
+    describe("it should only include urlFilter where appropriate", function ()
+    {
+      testRules(
+        ["@@||example.com", "@@$media,domain=example.com"],
+        [[1], [2]],
+        ["||example.com", undefined],
+        rules => rules.map(rule => rule.condition.urlFilter)
+      );
+    });
   });
 
   describe("Domain whitelisting", function()
@@ -707,7 +717,7 @@ describe("ChromeRules", function()
             },
             action: {
               type: "redirect",
-              redirectUrl: "data:application/javascript,"
+              url: "data:application/javascript,"
             }
           }
         ]
