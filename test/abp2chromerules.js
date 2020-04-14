@@ -106,6 +106,24 @@ describe("ChromeRules", function()
     {
       testRules(["foo$document", "||foo.com$document"], [false, false], []);
     });
+
+    it("should strip redundant ||* prefix", function()
+    {
+      testRules(
+        ["||*example.js$script"], [[1]], [
+          {
+            id: 1,
+            priority: 1,
+            condition: {
+              urlFilter: "example.js",
+              resourceTypes: ["script"],
+              isUrlFilterCaseSensitive: false
+            },
+            action: {type: "block"}
+          }
+        ]
+      );
+    });
   });
 
   describe("Request whitelisting filters", function()
@@ -139,13 +157,31 @@ describe("ChromeRules", function()
       ]);
     });
 
-    describe("it should only include urlFilter where appropriate", function ()
+    it("should only include urlFilter where appropriate", function()
     {
       testRules(
         ["@@||example.com", "@@$media,domain=example.com"],
         [[1], [2]],
         ["||example.com", undefined],
         rules => rules.map(rule => rule.condition.urlFilter)
+      );
+    });
+
+    it("should strip redundant ||* prefix", function()
+    {
+      testRules(
+        ["@@||*example.js$script"], [[1]], [
+          {
+            id: 1,
+            priority: 1,
+            condition: {
+              urlFilter: "example.js",
+              resourceTypes: ["script"],
+              isUrlFilterCaseSensitive: false
+            },
+            action: {type: "allow"}
+          }
+        ]
       );
     });
   });
