@@ -753,7 +753,7 @@ describe("ChromeRules", function()
             },
             action: {
               type: "redirect",
-              url: "data:application/javascript,"
+              redirect: {url: "data:application/javascript,"}
             }
           }
         ]
