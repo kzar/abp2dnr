@@ -124,6 +124,50 @@ describe("ChromeRules", function()
         ]
       );
     });
+
+    it("should handle regular expression filters", function()
+    {
+      testRules(
+        ["/\\.example\\.com/.*[a-z0-9]{4}/$script",
+         "/Test/$match-case",
+         "/(?!unsupported)/",
+         "@@/Regexp/"], [[1], [2], false, [3]], [
+          {
+            id: 1,
+            priority: 1,
+            condition: {
+              isUrlFilterCaseSensitive: false,
+              regexFilter: "\\.example\\.com\\/.*[a-z0-9]{4}",
+              resourceTypes: ["script"]
+            },
+            action: {
+              type: "block"
+            }
+          },
+          {
+            id: 2,
+            priority: 1,
+            condition: {
+              regexFilter: "Test"
+            },
+            action: {
+              type: "block"
+            }
+          },
+          {
+            id: 3,
+            priority: 1,
+            condition: {
+              isUrlFilterCaseSensitive: false,
+              regexFilter: "regexp"
+            },
+            action: {
+              type: "allow"
+            }
+          }
+         ]
+      );
+    });
   });
 
   describe("Request whitelisting filters", function()
@@ -640,11 +684,6 @@ describe("ChromeRules", function()
     it("should ignore filters with invalid filter options", function()
     {
       testRules(["||test.com$match_case"], [false], []);
-    });
-
-    it("should ignore RegExp matching filters", function()
-    {
-      testRules(["/\\.foo\\.com/.*[a-zA-Z0-9]{4}/"], [false], []);
     });
 
     it("should ignore filters containing extended CSS selectors", function()
