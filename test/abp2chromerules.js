@@ -181,9 +181,9 @@ describe("ChromeRules", function()
     });
   });
 
-  describe("Request whitelisting filters", function()
+  describe("Request allowlisting filters", function()
   {
-    it("should generate case-insensitive whitelisting filters", function()
+    it("should generate case-insensitive allowlisting filters", function()
     {
       testRules(["@@example.com"], [[1]], [
         {
@@ -198,7 +198,7 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should generate case sensitive whitelisting filters", function()
+    it("should generate case sensitive allowlisting filters", function()
     {
       testRules(["@@||example.com"], [[1]], [
         {
@@ -241,9 +241,9 @@ describe("ChromeRules", function()
     });
   });
 
-  describe("Domain whitelisting", function()
+  describe("Domain allowlisting", function()
   {
-    it("should generate domain whitelisting rules", function()
+    it("should generate domain allowlisting rules", function()
     {
       testRules(["@@||example.com^$document"], [[1]], [
         {
@@ -310,7 +310,7 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should generate whitelisting rules for URLs", function()
+    it("should generate allowlisting rules for URLs", function()
     {
       testRules(["@@||example.com/path^$font"], [[1]], [
         {
@@ -326,7 +326,7 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should generate allowAllRequest whitelisting rules", function()
+    it("should generate allowAllRequest allowlisting rules", function()
     {
       testRules(["@@||example.com/path$document"], [[1]], [
         {
@@ -403,7 +403,7 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should whitelist domains correctly", function()
+    it("should allowlist domains correctly", function()
     {
       testRules(["@@https://a.com$document",
                  "@@https://b.com$document",
