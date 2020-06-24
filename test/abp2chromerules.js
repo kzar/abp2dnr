@@ -23,12 +23,15 @@ const {Filter} = require("adblockpluscore/lib/filterClasses");
 const {ChromeRules} = require("../lib/abp2chromerules.js");
 
 function testRules(filters, expectedProcessReturn,
-                   expected, transformFunction, ruleOffset)
+                   expected, transformFunction, ruleOffset,
+                   checkValidRE2)
 {
   let processReturn = [];
   let chromeRules;
 
-  if (ruleOffset)
+  if (checkValidRE2)
+    chromeRules = new ChromeRules(ruleOffset || 1, checkValidRE2);
+  else if (ruleOffset)
     chromeRules = new ChromeRules(ruleOffset);
   else
     chromeRules = new ChromeRules();
@@ -125,7 +128,12 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should handle regular expression filters", function()
+    it("should ignore regular expression filters by default", function()
+    {
+      testRules(["/\\.example\\.com/.*[a-z0-9]{4}/$script"], [false], []);
+    });
+
+    it("should handle regexp filters using checkValidRE2 function", function()
     {
       testRules(
         ["/\\.example\\.com/.*[a-z0-9]{4}/$script",
@@ -165,7 +173,10 @@ describe("ChromeRules", function()
               type: "allow"
             }
           }
-         ]
+         ],
+         rules => rules,
+         null,
+         regexp => !regexp.includes("(?")
       );
     });
   });
