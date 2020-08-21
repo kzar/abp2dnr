@@ -20,7 +20,9 @@
 const assert = require("assert");
 
 const {Filter} = require("adblockpluscore/lib/filterClasses");
-const {ChromeRules} = require("../lib/abp2chromerules.js");
+const {ChromeRules,
+       STANDARD_PRIORITY,
+       CSP_PRIORITY} = require("../lib/abp2chromerules.js");
 
 function testRules(filters, expectedProcessReturn,
                    expected, transformFunction, ruleOffset,
@@ -56,7 +58,7 @@ describe("ChromeRules", function()
       testRules(["||example.com"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com"
           },
@@ -69,7 +71,7 @@ describe("ChromeRules", function()
       ], [[1], [2], [3], [4]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "/foo",
             isUrlFilterCaseSensitive: false
@@ -78,7 +80,7 @@ describe("ChromeRules", function()
         },
         {
           id: 2,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||test.com^"
           },
@@ -86,7 +88,7 @@ describe("ChromeRules", function()
         },
         {
           id: 3,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "http://example.com/foo",
             isUrlFilterCaseSensitive: false
@@ -95,7 +97,7 @@ describe("ChromeRules", function()
         },
         {
           id: 4,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "^foo^",
             isUrlFilterCaseSensitive: false
@@ -116,7 +118,7 @@ describe("ChromeRules", function()
         ["||*example.js$script"], [[1]], [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "example.js",
               resourceTypes: ["script"],
@@ -142,7 +144,7 @@ describe("ChromeRules", function()
          "@@/Regexp/"], [[1], [2], false, [3]], [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               isUrlFilterCaseSensitive: false,
               regexFilter: "\\.example\\.com\\/.*[a-z0-9]{4}",
@@ -154,7 +156,7 @@ describe("ChromeRules", function()
           },
           {
             id: 2,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               regexFilter: "Test"
             },
@@ -164,7 +166,7 @@ describe("ChromeRules", function()
           },
           {
             id: 3,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               isUrlFilterCaseSensitive: false,
               regexFilter: "regexp"
@@ -188,7 +190,7 @@ describe("ChromeRules", function()
       testRules(["@@example.com"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "example.com",
             isUrlFilterCaseSensitive: false
@@ -203,7 +205,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com"
           },
@@ -228,7 +230,7 @@ describe("ChromeRules", function()
         ["@@||*example.js$script"], [[1]], [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "example.js",
               resourceTypes: ["script"],
@@ -248,7 +250,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com^$document"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["main_frame"]
@@ -259,7 +261,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com^$document,image"], [[1, 2]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["main_frame"]
@@ -268,7 +270,7 @@ describe("ChromeRules", function()
         },
         {
           id: 2,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["image"]
@@ -281,7 +283,7 @@ describe("ChromeRules", function()
         [[1, 2], [3]], [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "||bar.com^",
               resourceTypes: ["main_frame"]
@@ -290,7 +292,7 @@ describe("ChromeRules", function()
           },
           {
             id: 2,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "||bar.com^",
               resourceTypes: ["image"]
@@ -299,7 +301,7 @@ describe("ChromeRules", function()
           },
           {
             id: 3,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "||foo.com^",
               resourceTypes: ["main_frame"]
@@ -315,7 +317,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com/path^$font"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com/path^",
             isUrlFilterCaseSensitive: false,
@@ -331,7 +333,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com/path$document"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
@@ -344,7 +346,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com/path$subdocument"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
@@ -357,7 +359,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com/path$document,subdocument"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
@@ -370,7 +372,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com$document,subdocument"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com",
             resourceTypes: ["main_frame", "sub_frame"]
@@ -382,7 +384,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com"
           },
@@ -393,7 +395,7 @@ describe("ChromeRules", function()
       testRules(["@@||example.com/path"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false
@@ -414,7 +416,7 @@ describe("ChromeRules", function()
         [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://a.com",
               resourceTypes: ["main_frame"]
@@ -423,7 +425,7 @@ describe("ChromeRules", function()
           },
           {
             id: 2,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://b.com",
               resourceTypes: ["main_frame"]
@@ -432,7 +434,7 @@ describe("ChromeRules", function()
           },
           {
             id: 3,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://c.com",
               resourceTypes: ["main_frame"]
@@ -441,7 +443,7 @@ describe("ChromeRules", function()
           },
           {
             id: 4,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://d.com",
               resourceTypes: ["main_frame"]
@@ -450,7 +452,7 @@ describe("ChromeRules", function()
           },
           {
             id: 5,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://e.com",
               resourceTypes: ["main_frame"]
@@ -468,7 +470,7 @@ describe("ChromeRules", function()
         [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://a.com",
               resourceTypes: ["main_frame"]
@@ -477,7 +479,7 @@ describe("ChromeRules", function()
           },
           {
             id: 2,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://b.com^",
               resourceTypes: ["main_frame"]
@@ -486,7 +488,7 @@ describe("ChromeRules", function()
           },
           {
             id: 3,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://c.com?",
               resourceTypes: ["main_frame"]
@@ -495,7 +497,7 @@ describe("ChromeRules", function()
           },
           {
             id: 4,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://d.com/",
               resourceTypes: ["main_frame"]
@@ -504,7 +506,7 @@ describe("ChromeRules", function()
           },
           {
             id: 5,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://e.com|",
               resourceTypes: ["main_frame"]
@@ -521,7 +523,7 @@ describe("ChromeRules", function()
         [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://a.com*/",
               resourceTypes: ["main_frame"]
@@ -530,7 +532,7 @@ describe("ChromeRules", function()
           },
           {
             id: 2,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://b.com^a",
               resourceTypes: ["main_frame"],
@@ -540,7 +542,7 @@ describe("ChromeRules", function()
           },
           {
             id: 3,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://c.com?a",
               resourceTypes: ["main_frame"],
@@ -550,7 +552,7 @@ describe("ChromeRules", function()
           },
           {
             id: 4,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://d.com/1",
               resourceTypes: ["main_frame"]
@@ -559,7 +561,7 @@ describe("ChromeRules", function()
           },
           {
             id: 5,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "https://e.com|2",
               resourceTypes: ["main_frame"]
@@ -771,7 +773,7 @@ describe("ChromeRules", function()
       testRules(["1$domain=foo.com|~bar.foo.com"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "1",
             isUrlFilterCaseSensitive: false,
@@ -794,7 +796,7 @@ describe("ChromeRules", function()
         [
           {
             id: 1,
-            priority: 1,
+            priority: STANDARD_PRIORITY,
             condition: {
               urlFilter: "||bar.com/ad.js",
               isUrlFilterCaseSensitive: false,
@@ -846,13 +848,53 @@ describe("ChromeRules", function()
       testRules(["foo$websocket"], [[1]], [
         {
           id: 1,
-          priority: 1,
+          priority: STANDARD_PRIORITY,
           condition: {
             urlFilter: "foo",
             isUrlFilterCaseSensitive: false,
             resourceTypes: ["websocket"]
           },
           action: {type: "block"}
+        }
+      ]);
+    });
+  });
+
+  describe("CSP filters", function()
+  {
+    it("should generate modifyHeader/allow rules for CSP filters", function()
+    {
+      testRules(["foo$csp=img-src 'none'"], [[1]], [
+        {
+          id: 1,
+          priority: CSP_PRIORITY,
+          condition: {
+            urlFilter: "foo",
+            resourceTypes: ["main_frame", "sub_frame"],
+            isUrlFilterCaseSensitive: false
+          },
+          action: {
+            type: "modifyHeaders",
+            responseHeaders: [{
+              header: "Content-Security-Policy",
+              operation: "append",
+              value: "img-src 'none'"
+            }]
+          }
+        }
+      ]);
+
+      testRules(["@@||testpages.adblockplus.org^$csp"], [[1]], [
+        {
+          id: 1,
+          priority: CSP_PRIORITY,
+          condition: {
+            urlFilter: "||testpages.adblockplus.org^",
+            resourceTypes: ["main_frame", "sub_frame"]
+          },
+          action: {
+            type: "allow"
+          }
         }
       ]);
     });
