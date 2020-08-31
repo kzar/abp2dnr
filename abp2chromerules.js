@@ -69,5 +69,6 @@ pipeline(
   process.stdin,
   split2(),
   chromeRulesStream(),
-  process.stdout
+  process.stdout,
+  error => { }
 );
