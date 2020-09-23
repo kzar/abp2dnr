@@ -254,7 +254,7 @@ describe("ChromeRules", function()
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
-            resourceTypes: ["main_frame"]
+            resourceTypes: ["main_frame", "sub_frame"]
           },
           action: {type: "allowAllRequests"}
         }
@@ -265,7 +265,7 @@ describe("ChromeRules", function()
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
-            resourceTypes: ["main_frame"]
+            resourceTypes: ["main_frame", "sub_frame"]
           },
           action: {type: "allowAllRequests"}
         },
@@ -287,7 +287,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "||bar.com^",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -305,7 +305,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "||foo.com^",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           }
@@ -338,7 +338,7 @@ describe("ChromeRules", function()
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
-            resourceTypes: ["main_frame"]
+            resourceTypes: ["main_frame", "sub_frame"]
           },
           action: {type: "allowAllRequests"}
         }
@@ -420,7 +420,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://a.com",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -429,7 +429,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://b.com",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -438,7 +438,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://c.com",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -447,7 +447,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://d.com",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -456,7 +456,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://e.com",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           }
@@ -474,7 +474,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://a.com",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -483,7 +483,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://b.com^",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -492,7 +492,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://c.com?",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -501,7 +501,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://d.com/",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -510,7 +510,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://e.com|",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           }
@@ -527,7 +527,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://a.com*/",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -536,7 +536,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://b.com^a",
-              resourceTypes: ["main_frame"],
+              resourceTypes: ["main_frame", "sub_frame"],
               isUrlFilterCaseSensitive: false
             },
             action: {type: "allowAllRequests"}
@@ -546,7 +546,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://c.com?a",
-              resourceTypes: ["main_frame"],
+              resourceTypes: ["main_frame", "sub_frame"],
               isUrlFilterCaseSensitive: false
             },
             action: {type: "allowAllRequests"}
@@ -556,7 +556,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://d.com/1",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           },
@@ -565,7 +565,7 @@ describe("ChromeRules", function()
             priority: ALLOW_ALL_REQUESTS_PRIORITY,
             condition: {
               urlFilter: "https://e.com|2",
-              resourceTypes: ["main_frame"]
+              resourceTypes: ["main_frame", "sub_frame"]
             },
             action: {type: "allowAllRequests"}
           }
