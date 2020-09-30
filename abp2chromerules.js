@@ -31,13 +31,13 @@ function chromeRulesStream(stream)
   let chromeRules = new ChromeRules();
 
   let transform = new Transform();
-  transform._transform = (line, encoding, cb) =>
+  transform._transform = async (line, encoding, cb) =>
   {
     if (encoding == "buffer")
       line = decoder.write(line);
 
     if (/^\s*[^[\s]/.test(line))
-      chromeRules.processFilter(Filter.fromText(Filter.normalize(line)));
+      await chromeRules.processFilter(Filter.fromText(Filter.normalize(line)));
 
     cb(null);
   };

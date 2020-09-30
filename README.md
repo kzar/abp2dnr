@@ -30,7 +30,7 @@ something like this:
 
     let chromeRules = new ChromeRules();
     for (let filter in filters)
-      chromeRules.processFilter(filter);
+      await chromeRules.processFilter(filter);
 
     let rules = chromeRules.generateRules();
 

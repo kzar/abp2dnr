@@ -25,9 +25,9 @@ const {ChromeRules,
        CSP_PRIORITY,
        ALLOW_ALL_REQUESTS_PRIORITY} = require("../lib/abp2chromerules.js");
 
-function testRules(filters, expectedProcessReturn,
-                   expected, transformFunction, ruleOffset,
-                   checkValidRE2)
+async function testRules(filters, expectedProcessReturn,
+                         expected, transformFunction, ruleOffset,
+                         checkValidRE2)
 {
   let processReturn = [];
   let chromeRules;
@@ -40,7 +40,11 @@ function testRules(filters, expectedProcessReturn,
     chromeRules = new ChromeRules();
 
   for (let filter of filters)
-    processReturn.push(chromeRules.processFilter(Filter.fromText(filter)));
+  {
+    processReturn.push(
+      await chromeRules.processFilter(Filter.fromText(filter))
+    );
+  }
 
   assert.deepEqual(processReturn, expectedProcessReturn);
 
@@ -54,9 +58,9 @@ describe("ChromeRules", function()
 {
   describe("Request filters", function()
   {
-    it("should generate request blocking rules", function()
+    it("should generate request blocking rules", async () =>
     {
-      testRules(["||example.com"], [[1]], [
+      await testRules(["||example.com"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -67,7 +71,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules([
+      await testRules([
         "/foo", "||test.com^", "http://example.com/foo", "^foo^"
       ], [[1], [2], [3], [4]], [
         {
@@ -108,14 +112,16 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("shouldn't generate blocking rules matching no request type", function()
+    it("shouldn't generate blocking rules matching no request type", async () =>
     {
-      testRules(["foo$document", "||foo.com$document"], [false, false], []);
+      await testRules(
+        ["foo$document", "||foo.com$document"], [false, false], []
+      );
     });
 
-    it("should strip redundant ||* prefix", function()
+    it("should strip redundant ||* prefix", async () =>
     {
-      testRules(
+      await testRules(
         ["||*example.js$script"], [[1]], [
           {
             id: 1,
@@ -131,14 +137,14 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should ignore regular expression filters by default", function()
+    it("should ignore regular expression filters by default", async () =>
     {
-      testRules(["/\\.example\\.com/.*[a-z0-9]{4}/$script"], [false], []);
+      await testRules(["/\\.example\\.com/.*[a-z0-9]{4}/$script"], [false], []);
     });
 
-    it("should handle regexp filters using checkValidRE2 function", function()
+    it("should handle regexp filters using isSupportedRegex", async () =>
     {
-      testRules(
+      await testRules(
         ["/\\.example\\.com/.*[a-z0-9]{4}/$script",
          "/Test/$match-case",
          "/(?!unsupported)/",
@@ -179,16 +185,16 @@ describe("ChromeRules", function()
          ],
          rules => rules,
          null,
-         regexp => !regexp.includes("(?")
+         ({regex}) => ({isSupported: !regex.includes("(?")})
       );
     });
   });
 
   describe("Request allowlisting filters", function()
   {
-    it("should generate case-insensitive allowlisting filters", function()
+    it("should generate case-insensitive allowlisting filters", async () =>
     {
-      testRules(["@@example.com"], [[1]], [
+      await testRules(["@@example.com"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -201,9 +207,9 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should generate case sensitive allowlisting filters", function()
+    it("should generate case sensitive allowlisting filters", async () =>
     {
-      testRules(["@@||example.com"], [[1]], [
+      await testRules(["@@||example.com"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -215,9 +221,9 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should only include urlFilter where appropriate", function()
+    it("should only include urlFilter where appropriate", async () =>
     {
-      testRules(
+      await testRules(
         ["@@||example.com", "@@$media,domain=example.com"],
         [[1], [2]],
         ["||example.com", undefined],
@@ -225,9 +231,9 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should strip redundant ||* prefix", function()
+    it("should strip redundant ||* prefix", async () =>
     {
-      testRules(
+      await testRules(
         ["@@||*example.js$script"], [[1]], [
           {
             id: 1,
@@ -246,9 +252,9 @@ describe("ChromeRules", function()
 
   describe("Domain allowlisting", function()
   {
-    it("should generate domain allowlisting rules", function()
+    it("should generate domain allowlisting rules", async () =>
     {
-      testRules(["@@||example.com^$document"], [[1]], [
+      await testRules(["@@||example.com^$document"], [[1]], [
         {
           id: 1,
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
@@ -259,7 +265,7 @@ describe("ChromeRules", function()
           action: {type: "allowAllRequests"}
         }
       ]);
-      testRules(["@@||example.com^$document,image"], [[1, 2]], [
+      await testRules(["@@||example.com^$document,image"], [[1, 2]], [
         {
           id: 1,
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
@@ -279,7 +285,7 @@ describe("ChromeRules", function()
           action: {type: "allow"}
         }
       ]);
-      testRules(
+      await testRules(
         ["@@||bar.com^$document,image", "@@||foo.com^$document"],
         [[1, 2], [3]], [
           {
@@ -313,9 +319,9 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should generate allowlisting rules for URLs", function()
+    it("should generate allowlisting rules for URLs", async () =>
     {
-      testRules(["@@||example.com/path^$font"], [[1]], [
+      await testRules(["@@||example.com/path^$font"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -329,9 +335,9 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should generate allowAllRequest allowlisting rules", function()
+    it("should generate allowAllRequest allowlisting rules", async () =>
     {
-      testRules(["@@||example.com/path$document"], [[1]], [
+      await testRules(["@@||example.com/path$document"], [[1]], [
         {
           id: 1,
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
@@ -344,7 +350,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com/path$subdocument"], [[1]], [
+      await testRules(["@@||example.com/path$subdocument"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -357,7 +363,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com/path$document,subdocument"], [[1]], [
+      await testRules(["@@||example.com/path$document,subdocument"], [[1]], [
         {
           id: 1,
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
@@ -370,7 +376,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com$document,subdocument"], [[1]], [
+      await testRules(["@@||example.com$document,subdocument"], [[1]], [
         {
           id: 1,
           priority: ALLOW_ALL_REQUESTS_PRIORITY,
@@ -382,7 +388,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com"], [[1]], [
+      await testRules(["@@||example.com"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -393,7 +399,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||example.com/path"], [[1]], [
+      await testRules(["@@||example.com/path"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -406,14 +412,14 @@ describe("ChromeRules", function()
       ]);
     });
 
-    it("should allowlist domains correctly", function()
+    it("should allowlist domains correctly", async () =>
     {
-      testRules(["@@https://a.com$document",
-                 "@@https://b.com$document",
-                 "@@https://c.com$document",
-                 "@@https://d.com$document",
-                 "@@https://e.com$document"],
-                [[1], [2], [3], [4], [5]],
+      await testRules(["@@https://a.com$document",
+                       "@@https://b.com$document",
+                       "@@https://c.com$document",
+                       "@@https://d.com$document",
+                       "@@https://e.com$document"],
+                       [[1], [2], [3], [4], [5]],
         [
           {
             id: 1,
@@ -462,12 +468,12 @@ describe("ChromeRules", function()
           }
         ]
       );
-      testRules(["@@https://a.com*$document",
-                 "@@https://b.com^$document",
-                 "@@https://c.com?$document",
-                 "@@https://d.com/$document",
-                 "@@https://e.com|$document"],
-                [[1], [2], [3], [4], [5]],
+      await testRules(["@@https://a.com*$document",
+                       "@@https://b.com^$document",
+                       "@@https://c.com?$document",
+                       "@@https://d.com/$document",
+                       "@@https://e.com|$document"],
+                       [[1], [2], [3], [4], [5]],
         [
           {
             id: 1,
@@ -516,7 +522,7 @@ describe("ChromeRules", function()
           }
         ]
       );
-      testRules(
+      await testRules(
         ["@@https://a.com*/$document", "@@https://b.com^a$document",
          "@@https://c.com?A$document", "@@https://d.com/1$document",
          "@@https://e.com|2$document"],
@@ -576,28 +582,28 @@ describe("ChromeRules", function()
 
   describe("$genericblock exceptions", function()
   {
-    it("should handle $genericblock exceptions", function()
+    it("should handle $genericblock exceptions", async () =>
     {
-      testRules(
+      await testRules(
         ["^ad.jpg|", "@@||example.com^$genericblock"],
         [[1], true],
         [[undefined, ["example.com"]]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]]));
-      testRules(
+      await testRules(
         ["^ad.jpg|$domain=test.com", "@@||example.com^$genericblock"],
         [[1], true],
         [[["test.com"], undefined]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]]));
-      testRules(
+      await testRules(
         ["^ad.jpg|$domain=~test.com", "@@||example.com^$genericblock"],
         [[1], true],
         [[undefined, ["test.com", "example.com"]]],
         rules => rules.map(rule => [rule.condition["domains"],
                                     rule.condition["excludedDomains"]]));
 
-      testRules(
+      await testRules(
         ["^ad.jpg|", "@@||example.com^$genericblock", "@@ad.jpg$image"],
         [[1], true, [2]],
         [[undefined, ["example.com"]], [undefined, undefined]],
@@ -609,9 +615,9 @@ describe("ChromeRules", function()
 
   describe("Request type mapping", function()
   {
-    it("should properly map request types", function()
+    it("should properly map request types", async () =>
     {
-      testRules(
+      await testRules(
         ["1", "2$image", "3$stylesheet", "4$script", "5$font", "6$media",
          "7$object", "8$object_subrequest", "9$xmlhttprequest", "10$websocket",
          "11$ping", "12$subdocument", "13$other", "14$IMAGE", "15$script,PING",
@@ -648,25 +654,25 @@ describe("ChromeRules", function()
 
   describe("Unsupported filters", function()
   {
-    it("should ignore comment filters", function()
+    it("should ignore comment filters", async () =>
     {
-      testRules(["! this is a comment"], [false], []);
+      await testRules(["! this is a comment"], [false], []);
     });
 
-    it("should ignore $sitekey filters", function()
+    it("should ignore $sitekey filters", async () =>
     {
-      testRules(["foo$sitekey=bar"], [false], []);
+      await testRules(["foo$sitekey=bar"], [false], []);
     });
 
-    it("should ignore element hiding filters", function()
+    it("should ignore element hiding filters", async () =>
     {
-      testRules(["##.whatever"], [false], []);
-      testRules(["test.com##.whatever"], [false], []);
+      await testRules(["##.whatever"], [false], []);
+      await testRules(["test.com##.whatever"], [false], []);
     });
 
-    it("should ignore element hiding exception filters", function()
+    it("should ignore element hiding exception filters", async () =>
     {
-      testRules([
+      await testRules([
         "##.whatever",
         "test.com,anothertest.com###something",
         "@@||special.test.com^$elemhide",
@@ -677,80 +683,80 @@ describe("ChromeRules", function()
       ], [false, false, false, false, false, false, false], []);
     });
 
-    it("should ignore WebRTC filters", function()
+    it("should ignore WebRTC filters", async () =>
     {
-      testRules(["foo$webrtc"], [false], []);
+      await testRules(["foo$webrtc"], [false], []);
     });
 
-    it("should ignore filters for popup windows", function()
+    it("should ignore filters for popup windows", async () =>
     {
-      testRules(["bar$popup"], [false], []);
+      await testRules(["bar$popup"], [false], []);
     });
 
-    it("should ignore filters which contain unicode characeters", function()
+    it("should ignore filters which contain unicode characeters", async () =>
     {
-      testRules(["$domain=🐈.cat"], [false], []);
-      testRules(["||🐈"], [false], []);
-      testRules(["🐈$domain=🐈.cat"], [false], []);
-      testRules(["🐈%F0%9F%90%88$domain=🐈.cat"], [false], []);
+      await testRules(["$domain=🐈.cat"], [false], []);
+      await testRules(["||🐈"], [false], []);
+      await testRules(["🐈$domain=🐈.cat"], [false], []);
+      await testRules(["🐈%F0%9F%90%88$domain=🐈.cat"], [false], []);
     });
 
-    it("should ignore filters with invalid filter options", function()
+    it("should ignore filters with invalid filter options", async () =>
     {
-      testRules(["||test.com$match_case"], [false], []);
+      await testRules(["||test.com$match_case"], [false], []);
     });
 
-    it("should ignore filters containing extended CSS selectors", function()
+    it("should ignore filters containing extended CSS selectors", async () =>
     {
-      testRules(
+      await testRules(
         ["test.com#?#.s-result-item:-abp-has(h5.s-sponsored-header)"],
         [false], []
       );
     });
 
-    it("should ignore snippet filters", function()
+    it("should ignore snippet filters", async () =>
     {
-      testRules(["test.com#$#abort-on-property-read atob"], [false], []);
+      await testRules(["test.com#$#abort-on-property-read atob"], [false], []);
     });
 
-    it("shouldn't do anything if there are no filters at all!", function()
+    it("shouldn't do anything if there are no filters at all!", async () =>
     {
-      testRules([], [], []);
+      await testRules([], [], []);
     });
   });
 
   describe("Filter options", function()
   {
-    it("should honour the $domain option", function()
+    it("should honour the $domain option", async () =>
     {
-      testRules(["1$domain=foo.com"], [[1]], ["foo.com"],
+      await testRules(["1$domain=foo.com"], [[1]], ["foo.com"],
                 rules => rules[0]["condition"]["domains"]);
     });
-    it("should honour the $third-party option", function()
+    it("should honour the $third-party option", async () =>
     {
-      testRules(["2$third-party"], [[1]], "thirdParty",
+      await testRules(["2$third-party"], [[1]], "thirdParty",
                 rules => rules[0]["condition"]["domainType"]);
     });
 
-    it("should honour the $match-case option", function()
+    it("should honour the $match-case option", async () =>
     {
-      testRules(["||test.com"], [[1]], undefined,
+      await testRules(["||test.com"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com$match-case"], [[1]], undefined,
+      await testRules(["||test.com$match-case"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/foo"], [[1]], false,
+      await testRules(["||test.com/foo"], [[1]], false,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/foo$match-case"], [[1]], undefined,
+      await testRules(["||test.com/foo$match-case"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/Foo"], [[1]], false,
+      await testRules(["||test.com/Foo"], [[1]], false,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      testRules(["||test.com/Foo$match-case"], [[1]], undefined,
+      await testRules(["||test.com/Foo$match-case"], [[1]], undefined,
                 rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
     });
 
-    it("should get advanced $domain and $match-case usage right", function()
+    it("should get advanced $domain and $match-case usage right", async () =>
     {
-      testRules(
+      await testRules(
         ["/Foo$domain=Domain.com", "/Foo$match-case,domain=Domain.com",
          "||fOO.com", "||fOO.com$match-case",
          "||fOO.com/1", "||fOO.com/A", "||fOO.com/A$match-case"],
@@ -769,9 +775,9 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should honour subdomain exceptions", function()
+    it("should honour subdomain exceptions", async () =>
     {
-      testRules(["1$domain=foo.com|~bar.foo.com"], [[1]], [
+      await testRules(["1$domain=foo.com|~bar.foo.com"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -789,9 +795,9 @@ describe("ChromeRules", function()
 
   describe("Rewrite filters", function()
   {
-    it("should generate redirection rules for abp-resources", function()
+    it("should generate redirection rules for abp-resources", async () =>
     {
-      testRules(
+      await testRules(
         ["||bar.com/ad.js$script,domain=foo.com,rewrite=abp-resource:blank-js"],
         [[1]],
         [
@@ -813,29 +819,29 @@ describe("ChromeRules", function()
       );
     });
 
-    it("should not generate any other redirection rules", function()
+    it("should not generate any other redirection rules", async () =>
     {
-      testRules(
+      await testRules(
         ["||foo.com/news.css$stylesheet,domain=foo.com,rewrite=foo.css"],
         [false], []
       );
-      testRules(
+      await testRules(
         ["/(server.com/assets/file.php)?.*$/$rewrite=$1"],
         [false], []
       );
-      testRules(
+      await testRules(
         ["/(server.com/assets/file.php)?.*$/$rewrite=https://test.com"],
         [false], []
       );
-      testRules(
+      await testRules(
         ["foo$rewrite=$1"],
         [false], []
       );
-      testRules(
+      await testRules(
         ["||example.com/ad.js$script,domain=foo.com,rewrite=abp-resource:foo"],
         [false], []
       );
-      testRules(
+      await testRules(
         ["foo$rewrite=http://google.com"],
         [false], []
       );
@@ -844,9 +850,9 @@ describe("ChromeRules", function()
 
   describe("Web sockets", function()
   {
-    it("should generate websocket blocking rules", function()
+    it("should generate websocket blocking rules", async () =>
     {
-      testRules(["foo$websocket"], [[1]], [
+      await testRules(["foo$websocket"], [[1]], [
         {
           id: 1,
           priority: STANDARD_PRIORITY,
@@ -863,9 +869,10 @@ describe("ChromeRules", function()
 
   describe("CSP filters", function()
   {
-    it("should generate modifyHeader/allow rules for CSP filters", function()
+    it("should generate modifyHeader/allow rules for CSP " +
+       "filters", async () =>
     {
-      testRules(["foo$csp=img-src 'none'"], [[1]], [
+      await testRules(["foo$csp=img-src 'none'"], [[1]], [
         {
           id: 1,
           priority: CSP_PRIORITY,
@@ -885,7 +892,7 @@ describe("ChromeRules", function()
         }
       ]);
 
-      testRules(["@@||testpages.adblockplus.org^$csp"], [[1]], [
+      await testRules(["@@||testpages.adblockplus.org^$csp"], [[1]], [
         {
           id: 1,
           priority: CSP_PRIORITY,
@@ -906,12 +913,12 @@ describe("ChromeRules", function()
     let filters = ["||example.com", "||foo.com"];
     let getIds = rules => rules.map(rule => rule.id);
 
-    it("should honour the firstId parameter", function()
+    it("should honour the firstId parameter", async () =>
     {
-      testRules(filters, [[1], [2]], [1, 2], getIds);
-      testRules(filters, [[1], [2]], [1, 2], getIds, 1);
-      testRules(filters, [[2], [3]], [2, 3], getIds, 2);
-      testRules(filters, [[1000], [1001]], [1000, 1001], getIds, 1000);
+      await testRules(filters, [[1], [2]], [1, 2], getIds);
+      await testRules(filters, [[1], [2]], [1, 2], getIds, 1);
+      await testRules(filters, [[2], [3]], [2, 3], getIds, 2);
+      await testRules(filters, [[1000], [1001]], [1000, 1001], getIds, 1000);
     });
   });
 });
