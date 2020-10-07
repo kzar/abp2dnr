@@ -23,12 +23,12 @@ const {StringDecoder} = require("string_decoder");
 const {Filter} = require("adblockpluscore/lib/filterClasses");
 const split2 = require("split2");
 
-const {ChromeRules} = require("./lib/abp2chromerules");
+const {Ruleset} = require("./lib/abp2dnr");
 
-function chromeRulesStream(stream)
+function rulesetStream(stream)
 {
   let decoder = new StringDecoder("utf-8");
-  let chromeRules = new ChromeRules();
+  let ruleset = new Ruleset();
 
   let transform = new Transform();
   transform._transform = async (line, encoding, cb) =>
@@ -37,13 +37,13 @@ function chromeRulesStream(stream)
       line = decoder.write(line);
 
     if (/^\s*[^[\s]/.test(line))
-      await chromeRules.processFilter(Filter.fromText(Filter.normalize(line)));
+      await ruleset.processFilter(Filter.fromText(Filter.normalize(line)));
 
     cb(null);
   };
   transform._flush = (cb) =>
   {
-    let rules = chromeRules.generateRules();
+    let rules = ruleset.generateRules();
     let output = [];
 
     // If the rule set is too huge, JSON.stringify throws
@@ -68,7 +68,7 @@ function chromeRulesStream(stream)
 pipeline(
   process.stdin,
   split2(),
-  chromeRulesStream(),
+  rulesetStream(),
   process.stdout,
   error => { }
 );

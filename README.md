@@ -1,7 +1,7 @@
-# abp2chromerules
+# abp2dnr
 
 This is a script to convert [Adblock Plus filter lists](https://adblockplus.org/filters)
-to [chrome.declarativeNetRequest rules](https://developer.chrome.com/extensions/declarativeNetRequest)
+to [chrome.declarativeNetRequest rulesets](https://developer.chrome.com/extensions/declarativeNetRequest)
 as far as is possible.
 
 ## Requirements
@@ -19,22 +19,22 @@ Then the required packages can be installed via [npm](https://npmjs.org):
 Create a `chrome.declarativeNetRequest` rule list `output.json` from the
 Adblock Plus filter list `input.txt`:
 
-    node abp2chromerules.js < input.txt > output.json
+    node abp2dnr.js < input.txt > output.json
 
 #### API
 
 Behind that, there's an API which the command line interface uses. It works
 something like this:
 
-    const {ChromeRules} = require("./lib/abp2chromerules");
+    const {Ruleset} = require("./lib/abp2dnr");
 
-    let chromeRules = new ChromeRules();
+    let rulset = new Ruleset();
     for (let filter in filters)
-      await chromeRules.processFilter(filter);
+      await ruleset.processFilter(filter);
 
-    let rules = chromeRules.generateRules();
+    let rules = ruleset.generateRules();
 
-It's important to note that `ChromeRules.prototype.processFilter` expects a
+It's important to note that `Ruleset.prototype.processFilter` expects a
 `Filter` Object and _not_ a string containing the filter's text. To parse
 filter text you'll need to do something like this first:
 

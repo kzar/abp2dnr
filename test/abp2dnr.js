@@ -20,41 +20,41 @@
 const assert = require("assert");
 
 const {Filter} = require("adblockpluscore/lib/filterClasses");
-const {ChromeRules,
+const {Ruleset,
        STANDARD_PRIORITY,
        CSP_PRIORITY,
-       ALLOW_ALL_REQUESTS_PRIORITY} = require("../lib/abp2chromerules.js");
+       ALLOW_ALL_REQUESTS_PRIORITY} = require("../lib/abp2dnr.js");
 
 async function testRules(filters, expectedProcessReturn,
                          expected, transformFunction, ruleOffset,
                          checkValidRE2)
 {
   let processReturn = [];
-  let chromeRules;
+  let ruleset;
 
   if (checkValidRE2)
-    chromeRules = new ChromeRules(ruleOffset || 1, checkValidRE2);
+    ruleset = new Ruleset(ruleOffset || 1, checkValidRE2);
   else if (ruleOffset)
-    chromeRules = new ChromeRules(ruleOffset);
+    ruleset = new Ruleset(ruleOffset);
   else
-    chromeRules = new ChromeRules();
+    ruleset = new Ruleset();
 
   for (let filter of filters)
   {
     processReturn.push(
-      await chromeRules.processFilter(Filter.fromText(filter))
+      await ruleset.processFilter(Filter.fromText(filter))
     );
   }
 
   assert.deepEqual(processReturn, expectedProcessReturn);
 
-  let rules = chromeRules.generateRules(ruleOffset);
+  let rules = ruleset.generateRules(ruleOffset);
   if (transformFunction)
     rules = transformFunction(rules);
   assert.deepEqual(rules, expected);
 }
 
-describe("ChromeRules", function()
+describe("Ruleset", function()
 {
   describe("Request filters", function()
   {
