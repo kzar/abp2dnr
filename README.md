@@ -4,6 +4,8 @@ This is a script to convert [Adblock Plus filter lists](https://adblockplus.org/
 to [chrome.declarativeNetRequest rulesets](https://developer.chrome.com/extensions/declarativeNetRequest)
 as far as is possible.
 
+See also [Chromium's built-in filter list converter](https://source.chromium.org/chromium/chromium/src/+/master:extensions/browser/api/declarative_net_request/filter_list_converter/).
+
 ## Requirements
 
 Before you begin, make sure to install [Node.js](2) (version 10 or higher).
