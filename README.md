@@ -10,10 +10,13 @@ See also [Chromium's built-in filter list converter](https://source.chromium.org
 
 ## Requirements
 
-Before you begin, make sure to install [Node.js](2) (version 10 or higher).
+Before you begin, make sure to install [Node.js](2) (version 10 or higher) and
+[whatever node-gyp requires](https://github.com/nodejs/node-gyp#on-unix) to
+compile RE2 on your system.
 
-Then the required packages can be installed via [npm](https://npmjs.org):
+Then the required packages can be installed via Git and [npm](https://npmjs.org):
 
+    git submodule update --init
     npm install
 
 ## Usage

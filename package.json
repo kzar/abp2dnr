@@ -3,6 +3,8 @@
   "repository": {},
   "dependencies": {
     "adblockpluscore": "git+https://github.com/adblockplus/adblockpluscore.git#ca106c5",
+    "nan": "2.14.1",
+    "node-gyp": "7.1.0",
     "split2": "3.1.1"
   },
   "devDependencies": {
@@ -12,6 +14,8 @@
   },
   "scripts": {
     "lint": "eslint *.js lib/ test/",
-    "test": "mocha"
+    "test": "mocha",
+    "rebuild": "node-gyp rebuild",
+    "install": "npm run rebuild"
   }
 }

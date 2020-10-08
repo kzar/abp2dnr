@@ -23,12 +23,13 @@ const {StringDecoder} = require("string_decoder");
 const {Filter} = require("adblockpluscore/lib/filterClasses");
 const split2 = require("split2");
 
+const {isRegexSupported} = require("./build/Release/isRegexSupported");
 const {Ruleset} = require("./lib/abp2dnr");
 
 function rulesetStream(stream)
 {
   let decoder = new StringDecoder("utf-8");
-  let ruleset = new Ruleset();
+  let ruleset = new Ruleset(1, isRegexSupported);
 
   let transform = new Transform();
   transform._transform = async (line, encoding, cb) =>
