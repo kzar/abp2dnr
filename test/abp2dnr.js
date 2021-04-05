@@ -20,37 +20,28 @@
 const assert = require("assert");
 
 const {Filter} = require("adblockpluscore/lib/filterClasses");
-const {Ruleset,
-       STANDARD_PRIORITY,
-       CSP_PRIORITY,
-       ALLOW_ALL_REQUESTS_PRIORITY} = require("../lib/abp2dnr.js");
+const {convertFilter,
+       GENERIC_PRIORITY,
+       GENERIC_ALLOW_ALL_PRIORITY,
+       SPECIFIC_PRIORITY,
+       SPECIFIC_ALLOW_ALL_PRIORITY} = require("../lib/abp2dnr.js");
 
-async function testRules(filters, expectedProcessReturn,
-                         expected, transformFunction, ruleOffset,
-                         checkValidRE2)
+async function testRules(filters, expected, transformFunction, isRegexSupported)
 {
-  let processReturn = [];
-  let ruleset;
-
-  if (checkValidRE2)
-    ruleset = new Ruleset(ruleOffset || 1, checkValidRE2);
-  else if (ruleOffset)
-    ruleset = new Ruleset(ruleOffset);
-  else
-    ruleset = new Ruleset();
+  let rules = [];
 
   for (let filter of filters)
   {
-    processReturn.push(
-      await ruleset.processFilter(Filter.fromText(filter))
-    );
+    for (let rule of await convertFilter(Filter.fromText(filter),
+                                         isRegexSupported))
+    {
+      rules.push(rule);
+    }
   }
 
-  assert.deepEqual(processReturn, expectedProcessReturn);
-
-  let rules = ruleset.generateRules(ruleOffset);
   if (transformFunction)
-    rules = transformFunction(rules);
+    rules = rules.map(transformFunction);
+
   assert.deepEqual(rules, expected);
 }
 
@@ -60,10 +51,9 @@ describe("Ruleset", function()
   {
     it("should generate request blocking rules", async () =>
     {
-      await testRules(["||example.com"], [[1]], [
+      await testRules(["||example.com"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "||example.com"
           },
@@ -73,10 +63,9 @@ describe("Ruleset", function()
 
       await testRules([
         "/foo", "||test.com^", "http://example.com/foo", "^foo^"
-      ], [[1], [2], [3], [4]], [
+      ], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "/foo",
             isUrlFilterCaseSensitive: false
@@ -84,16 +73,14 @@ describe("Ruleset", function()
           action: {type: "block"}
         },
         {
-          id: 2,
-          priority: STANDARD_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "||test.com^"
           },
           action: {type: "block"}
         },
         {
-          id: 3,
-          priority: STANDARD_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "http://example.com/foo",
             isUrlFilterCaseSensitive: false
@@ -101,8 +88,7 @@ describe("Ruleset", function()
           action: {type: "block"}
         },
         {
-          id: 4,
-          priority: STANDARD_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "^foo^",
             isUrlFilterCaseSensitive: false
@@ -115,17 +101,16 @@ describe("Ruleset", function()
     it("shouldn't generate blocking rules matching no request type", async () =>
     {
       await testRules(
-        ["foo$document", "||foo.com$document"], [false, false], []
+        ["foo$document", "||foo.com$document"], []
       );
     });
 
     it("should strip redundant ||* prefix", async () =>
     {
       await testRules(
-        ["||*example.js$script"], [[1]], [
+        ["||*example.js$script"], [
           {
-            id: 1,
-            priority: STANDARD_PRIORITY,
+            priority: GENERIC_PRIORITY,
             condition: {
               urlFilter: "example.js",
               resourceTypes: ["script"],
@@ -139,19 +124,18 @@ describe("Ruleset", function()
 
     it("should ignore regular expression filters by default", async () =>
     {
-      await testRules(["/\\.example\\.com/.*[a-z0-9]{4}/$script"], [false], []);
+      await testRules(["/\\.example\\.com/.*[a-z0-9]{4}/$script"], []);
     });
 
-    it("should handle regexp filters using isSupportedRegex", async () =>
+    it("should handle regexp filters using isRegexSupported", async () =>
     {
       await testRules(
         ["/\\.example\\.com/.*[a-z0-9]{4}/$script",
          "/Test/$match-case",
          "/(?!unsupported)/",
-         "@@/Regexp/"], [[1], [2], false, [3]], [
+         "@@/Regexp/"], [
           {
-            id: 1,
-            priority: STANDARD_PRIORITY,
+            priority: GENERIC_PRIORITY,
             condition: {
               isUrlFilterCaseSensitive: false,
               regexFilter: "\\.example\\.com\\/.*[a-z0-9]{4}",
@@ -162,8 +146,7 @@ describe("Ruleset", function()
             }
           },
           {
-            id: 2,
-            priority: STANDARD_PRIORITY,
+            priority: GENERIC_PRIORITY,
             condition: {
               regexFilter: "Test"
             },
@@ -172,8 +155,7 @@ describe("Ruleset", function()
             }
           },
           {
-            id: 3,
-            priority: STANDARD_PRIORITY,
+            priority: SPECIFIC_PRIORITY,
             condition: {
               isUrlFilterCaseSensitive: false,
               regexFilter: "regexp"
@@ -183,7 +165,6 @@ describe("Ruleset", function()
             }
           }
          ],
-         rules => rules,
          null,
          ({regex}) => ({isSupported: !regex.includes("(?")})
       );
@@ -194,10 +175,9 @@ describe("Ruleset", function()
   {
     it("should generate case-insensitive allowlisting filters", async () =>
     {
-      await testRules(["@@example.com"], [[1]], [
+      await testRules(["@@example.com"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "example.com",
             isUrlFilterCaseSensitive: false
@@ -209,10 +189,9 @@ describe("Ruleset", function()
 
     it("should generate case sensitive allowlisting filters", async () =>
     {
-      await testRules(["@@||example.com"], [[1]], [
+      await testRules(["@@||example.com"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||example.com"
           },
@@ -225,19 +204,17 @@ describe("Ruleset", function()
     {
       await testRules(
         ["@@||example.com", "@@$media,domain=example.com"],
-        [[1], [2]],
         ["||example.com", undefined],
-        rules => rules.map(rule => rule.condition.urlFilter)
+        rule => rule.condition.urlFilter
       );
     });
 
     it("should strip redundant ||* prefix", async () =>
     {
       await testRules(
-        ["@@||*example.js$script"], [[1]], [
+        ["@@||*example.js$script"], [
           {
-            id: 1,
-            priority: STANDARD_PRIORITY,
+            priority: SPECIFIC_PRIORITY,
             condition: {
               urlFilter: "example.js",
               resourceTypes: ["script"],
@@ -254,10 +231,9 @@ describe("Ruleset", function()
   {
     it("should generate domain allowlisting rules", async () =>
     {
-      await testRules(["@@||example.com^$document"], [[1]], [
+      await testRules(["@@||example.com^$document"], [
         {
-          id: 1,
-          priority: ALLOW_ALL_REQUESTS_PRIORITY,
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["main_frame", "sub_frame"]
@@ -265,10 +241,9 @@ describe("Ruleset", function()
           action: {type: "allowAllRequests"}
         }
       ]);
-      await testRules(["@@||example.com^$document,image"], [[1, 2]], [
+      await testRules(["@@||example.com^$document,image"], [
         {
-          id: 1,
-          priority: ALLOW_ALL_REQUESTS_PRIORITY,
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["main_frame", "sub_frame"]
@@ -276,8 +251,7 @@ describe("Ruleset", function()
           action: {type: "allowAllRequests"}
         },
         {
-          id: 2,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||example.com^",
             resourceTypes: ["image"]
@@ -287,10 +261,9 @@ describe("Ruleset", function()
       ]);
       await testRules(
         ["@@||bar.com^$document,image", "@@||foo.com^$document"],
-        [[1, 2], [3]], [
+        [
           {
-            id: 1,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "||bar.com^",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -298,8 +271,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 2,
-            priority: STANDARD_PRIORITY,
+            priority: SPECIFIC_PRIORITY,
             condition: {
               urlFilter: "||bar.com^",
               resourceTypes: ["image"]
@@ -307,8 +279,7 @@ describe("Ruleset", function()
             action: {type: "allow"}
           },
           {
-            id: 3,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "||foo.com^",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -321,10 +292,9 @@ describe("Ruleset", function()
 
     it("should generate allowlisting rules for URLs", async () =>
     {
-      await testRules(["@@||example.com/path^$font"], [[1]], [
+      await testRules(["@@||example.com/path^$font"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||example.com/path^",
             isUrlFilterCaseSensitive: false,
@@ -337,10 +307,9 @@ describe("Ruleset", function()
 
     it("should generate allowAllRequest allowlisting rules", async () =>
     {
-      await testRules(["@@||example.com/path$document"], [[1]], [
+      await testRules(["@@||example.com/path$document"], [
         {
-          id: 1,
-          priority: ALLOW_ALL_REQUESTS_PRIORITY,
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
@@ -350,10 +319,9 @@ describe("Ruleset", function()
         }
       ]);
 
-      await testRules(["@@||example.com/path$subdocument"], [[1]], [
+      await testRules(["@@||example.com/path$subdocument"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
@@ -363,10 +331,9 @@ describe("Ruleset", function()
         }
       ]);
 
-      await testRules(["@@||example.com/path$document,subdocument"], [[1]], [
+      await testRules(["@@||example.com/path$document,subdocument"], [
         {
-          id: 1,
-          priority: ALLOW_ALL_REQUESTS_PRIORITY,
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false,
@@ -376,10 +343,9 @@ describe("Ruleset", function()
         }
       ]);
 
-      await testRules(["@@||example.com$document,subdocument"], [[1]], [
+      await testRules(["@@||example.com$document,subdocument"], [
         {
-          id: 1,
-          priority: ALLOW_ALL_REQUESTS_PRIORITY,
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
           condition: {
             urlFilter: "||example.com",
             resourceTypes: ["main_frame", "sub_frame"]
@@ -388,10 +354,9 @@ describe("Ruleset", function()
         }
       ]);
 
-      await testRules(["@@||example.com"], [[1]], [
+      await testRules(["@@||example.com"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||example.com"
           },
@@ -399,10 +364,9 @@ describe("Ruleset", function()
         }
       ]);
 
-      await testRules(["@@||example.com/path"], [[1]], [
+      await testRules(["@@||example.com/path"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||example.com/path",
             isUrlFilterCaseSensitive: false
@@ -419,11 +383,9 @@ describe("Ruleset", function()
                        "@@https://c.com$document",
                        "@@https://d.com$document",
                        "@@https://e.com$document"],
-                       [[1], [2], [3], [4], [5]],
         [
           {
-            id: 1,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://a.com",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -431,8 +393,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 2,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://b.com",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -440,8 +401,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 3,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://c.com",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -449,8 +409,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 4,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://d.com",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -458,8 +417,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 5,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://e.com",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -473,11 +431,9 @@ describe("Ruleset", function()
                        "@@https://c.com?$document",
                        "@@https://d.com/$document",
                        "@@https://e.com|$document"],
-                       [[1], [2], [3], [4], [5]],
         [
           {
-            id: 1,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://a.com",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -485,8 +441,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 2,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://b.com^",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -494,8 +449,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 3,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://c.com?",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -503,8 +457,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 4,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://d.com/",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -512,8 +465,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 5,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://e.com|",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -526,11 +478,9 @@ describe("Ruleset", function()
         ["@@https://a.com*/$document", "@@https://b.com^a$document",
          "@@https://c.com?A$document", "@@https://d.com/1$document",
          "@@https://e.com|2$document"],
-         [[1], [2], [3], [4], [5]],
         [
           {
-            id: 1,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://a.com*/",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -538,8 +488,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 2,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://b.com^a",
               resourceTypes: ["main_frame", "sub_frame"],
@@ -548,8 +497,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 3,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://c.com?a",
               resourceTypes: ["main_frame", "sub_frame"],
@@ -558,8 +506,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 4,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://d.com/1",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -567,8 +514,7 @@ describe("Ruleset", function()
             action: {type: "allowAllRequests"}
           },
           {
-            id: 5,
-            priority: ALLOW_ALL_REQUESTS_PRIORITY,
+            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
             condition: {
               urlFilter: "https://e.com|2",
               resourceTypes: ["main_frame", "sub_frame"]
@@ -585,30 +531,72 @@ describe("Ruleset", function()
     it("should handle $genericblock exceptions", async () =>
     {
       await testRules(
-        ["^ad.jpg|", "@@||example.com^$genericblock"],
-        [[1], true],
-        [[undefined, ["example.com"]]],
-        rules => rules.map(rule => [rule.condition["domains"],
-                                    rule.condition["excludedDomains"]]));
+        ["@@foo$genericblock", "@@foo$genericblock,script"], [
+        {
+          action: {
+            type: "allowAllRequests"
+          },
+          priority: GENERIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "foo",
+            resourceTypes: ["main_frame", "sub_frame"],
+            isUrlFilterCaseSensitive: false
+          }
+        },
+        {
+          action: {
+            type: "allowAllRequests"
+          },
+          priority: GENERIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "foo",
+            resourceTypes: ["main_frame", "sub_frame"],
+            isUrlFilterCaseSensitive: false
+          }
+        },
+        {
+          action: {
+            type: "allow"
+          },
+          condition: {
+            isUrlFilterCaseSensitive: false,
+            resourceTypes: ["script"],
+            urlFilter: "foo"
+          },
+          priority: GENERIC_PRIORITY
+        }
+        ]
+      );
+
+      // Specific blocking rules should get the specific priority and
+      // non-genericblock allowing rules should get the specific priority.
+      // That way, genericblock allowing rules only prevent generic blocking.
       await testRules(
-        ["^ad.jpg|$domain=test.com", "@@||example.com^$genericblock"],
-        [[1], true],
-        [[["test.com"], undefined]],
-        rules => rules.map(rule => [rule.condition["domains"],
-                                    rule.condition["excludedDomains"]]));
-      await testRules(
-        ["^ad.jpg|$domain=~test.com", "@@||example.com^$genericblock"],
-        [[1], true],
-        [[undefined, ["test.com", "example.com"]]],
-        rules => rules.map(rule => [rule.condition["domains"],
-                                    rule.condition["excludedDomains"]]));
+        ["@@||example.com^$genericblock",
+         "@@||example.com^$genericblock,domain=foo.com",
+         "@@ad.jpg$image", "@@bar.com$domain=foo.com",
+         "@@ad.jpg$document", "@@bar.com$document,domain=foo.com"],
+        [GENERIC_ALLOW_ALL_PRIORITY,
+         GENERIC_ALLOW_ALL_PRIORITY,
+         SPECIFIC_PRIORITY, SPECIFIC_PRIORITY,
+         SPECIFIC_ALLOW_ALL_PRIORITY, SPECIFIC_ALLOW_ALL_PRIORITY],
+        rule => rule.priority
+      );
 
       await testRules(
-        ["^ad.jpg|", "@@||example.com^$genericblock", "@@ad.jpg$image"],
-        [[1], true, [2]],
-        [[undefined, ["example.com"]], [undefined, undefined]],
-        rules => rules.map(rule => [rule.condition["domains"],
-                                    rule.condition["excludedDomains"]])
+        ["ad", "^ad.jpg|$domain=foo.com", "^ad.jpg|",
+         "^ad.jpg|$domain=~test.com", "^ad.jpg|$domain=test.com"],
+        [GENERIC_PRIORITY, SPECIFIC_PRIORITY, GENERIC_PRIORITY,
+         GENERIC_PRIORITY, SPECIFIC_PRIORITY],
+        rule => rule.priority
+      );
+
+      await testRules(
+        ["ad$csp=foo", "ad$domain=foo.com,csp=foo",
+         "@@ad$csp", "@@ad$csp,genericblock"],
+        [GENERIC_PRIORITY, SPECIFIC_PRIORITY,
+         SPECIFIC_PRIORITY, GENERIC_PRIORITY],
+        rule => rule.priority
       );
     });
   });
@@ -622,8 +610,6 @@ describe("Ruleset", function()
          "7$object", "8$object_subrequest", "9$xmlhttprequest", "10$websocket",
          "11$ping", "12$subdocument", "13$other", "14$IMAGE", "15$script,PING",
          "16$~image"],
-        [[1], [2], [3], [4], [5], [6], [7], [8],
-         [9], [10], [11], [12], [13], [14], [15], [16]],
         [undefined,
          ["image"],
          ["stylesheet"],
@@ -641,13 +627,11 @@ describe("Ruleset", function()
          ["ping", "script"],
          ["csp_report", "font", "media", "object", "other", "ping", "script",
           "stylesheet", "sub_frame", "websocket", "xmlhttprequest"]],
-        rules => rules.map(
-          rule =>
-          {
-            let resourceTypes = rule.condition.resourceTypes;
-            return resourceTypes && resourceTypes.sort();
-          }
-        )
+        rule =>
+        {
+          let resourceTypes = rule.condition.resourceTypes;
+          return resourceTypes && resourceTypes.sort();
+        }
       );
     });
   });
@@ -656,18 +640,18 @@ describe("Ruleset", function()
   {
     it("should ignore comment filters", async () =>
     {
-      await testRules(["! this is a comment"], [false], []);
+      await testRules(["! this is a comment"], []);
     });
 
     it("should ignore $sitekey filters", async () =>
     {
-      await testRules(["foo$sitekey=bar"], [false], []);
+      await testRules(["foo$sitekey=bar"], []);
     });
 
     it("should ignore element hiding filters", async () =>
     {
-      await testRules(["##.whatever"], [false], []);
-      await testRules(["test.com##.whatever"], [false], []);
+      await testRules(["##.whatever"], []);
+      await testRules(["test.com##.whatever"], []);
     });
 
     it("should ignore element hiding exception filters", async () =>
@@ -680,48 +664,48 @@ describe("Ruleset", function()
         "@@||anothertest.com^$elemhide",
         "@@^something^$elemhide",
         "@@^anything^$generichide"
-      ], [false, false, false, false, false, false, false], []);
+      ], []);
     });
 
     it("should ignore WebRTC filters", async () =>
     {
-      await testRules(["foo$webrtc"], [false], []);
+      await testRules(["foo$webrtc"], []);
     });
 
     it("should ignore filters for popup windows", async () =>
     {
-      await testRules(["bar$popup"], [false], []);
+      await testRules(["bar$popup"], []);
     });
 
     it("should ignore filters which contain unicode characeters", async () =>
     {
-      await testRules(["$domain=🐈.cat"], [false], []);
-      await testRules(["||🐈"], [false], []);
-      await testRules(["🐈$domain=🐈.cat"], [false], []);
-      await testRules(["🐈%F0%9F%90%88$domain=🐈.cat"], [false], []);
+      await testRules(["$domain=🐈.cat"], []);
+      await testRules(["||🐈"], []);
+      await testRules(["🐈$domain=🐈.cat"], []);
+      await testRules(["🐈%F0%9F%90%88$domain=🐈.cat"], []);
     });
 
     it("should ignore filters with invalid filter options", async () =>
     {
-      await testRules(["||test.com$match_case"], [false], []);
+      await testRules(["||test.com$match_case"], []);
     });
 
     it("should ignore filters containing extended CSS selectors", async () =>
     {
       await testRules(
         ["test.com#?#.s-result-item:-abp-has(h5.s-sponsored-header)"],
-        [false], []
+        []
       );
     });
 
     it("should ignore snippet filters", async () =>
     {
-      await testRules(["test.com#$#abort-on-property-read atob"], [false], []);
+      await testRules(["test.com#$#abort-on-property-read atob"], []);
     });
 
     it("shouldn't do anything if there are no filters at all!", async () =>
     {
-      await testRules([], [], []);
+      await testRules([], []);
     });
   });
 
@@ -729,29 +713,29 @@ describe("Ruleset", function()
   {
     it("should honour the $domain option", async () =>
     {
-      await testRules(["1$domain=foo.com"], [[1]], ["foo.com"],
-                rules => rules[0]["condition"]["domains"]);
+      await testRules(["1$domain=foo.com"], [["foo.com"]],
+                      rule => rule.condition.domains);
     });
     it("should honour the $third-party option", async () =>
     {
-      await testRules(["2$third-party"], [[1]], "thirdParty",
-                rules => rules[0]["condition"]["domainType"]);
+      await testRules(["2$third-party"], ["thirdParty"],
+                      rule => rule.condition.domainType);
     });
 
     it("should honour the $match-case option", async () =>
     {
-      await testRules(["||test.com"], [[1]], undefined,
-                rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      await testRules(["||test.com$match-case"], [[1]], undefined,
-                rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      await testRules(["||test.com/foo"], [[1]], false,
-                rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      await testRules(["||test.com/foo$match-case"], [[1]], undefined,
-                rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      await testRules(["||test.com/Foo"], [[1]], false,
-                rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
-      await testRules(["||test.com/Foo$match-case"], [[1]], undefined,
-                rules => rules[0]["condition"]["isUrlFilterCaseSensitive"]);
+      await testRules(["||test.com"], [undefined],
+                rule => rule.condition.isUrlFilterCaseSensitive);
+      await testRules(["||test.com$match-case"], [undefined],
+                rule => rule.condition.isUrlFilterCaseSensitive);
+      await testRules(["||test.com/foo"], [false],
+                rule => rule.condition.isUrlFilterCaseSensitive);
+      await testRules(["||test.com/foo$match-case"], [undefined],
+                rule => rule.condition.isUrlFilterCaseSensitive);
+      await testRules(["||test.com/Foo"], [false],
+                rule => rule.condition.isUrlFilterCaseSensitive);
+      await testRules(["||test.com/Foo$match-case"], [undefined],
+                rule => rule.condition.isUrlFilterCaseSensitive);
     });
 
     it("should get advanced $domain and $match-case usage right", async () =>
@@ -760,7 +744,6 @@ describe("Ruleset", function()
         ["/Foo$domain=Domain.com", "/Foo$match-case,domain=Domain.com",
          "||fOO.com", "||fOO.com$match-case",
          "||fOO.com/1", "||fOO.com/A", "||fOO.com/A$match-case"],
-        [[1], [2], [3], [4], [5], [6], [7]],
         [{urlFilter: "/foo",
           isUrlFilterCaseSensitive: false,
           domains: ["domain.com"]},
@@ -771,16 +754,15 @@ describe("Ruleset", function()
          {urlFilter: "||foo.com/a", isUrlFilterCaseSensitive: false},
          {urlFilter: "||foo.com/A"}
         ],
-         rules => rules.map(rule => rule["condition"])
+        rule => rule.condition
       );
     });
 
     it("should honour subdomain exceptions", async () =>
     {
-      await testRules(["1$domain=foo.com|~bar.foo.com"], [[1]], [
+      await testRules(["1$domain=foo.com|~bar.foo.com"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "1",
             isUrlFilterCaseSensitive: false,
@@ -799,11 +781,9 @@ describe("Ruleset", function()
     {
       await testRules(
         ["||bar.com/ad.js$script,domain=foo.com,rewrite=abp-resource:blank-js"],
-        [[1]],
         [
           {
-            id: 1,
-            priority: STANDARD_PRIORITY,
+            priority: SPECIFIC_PRIORITY,
             condition: {
               urlFilter: "||bar.com/ad.js",
               isUrlFilterCaseSensitive: false,
@@ -823,27 +803,27 @@ describe("Ruleset", function()
     {
       await testRules(
         ["||foo.com/news.css$stylesheet,domain=foo.com,rewrite=foo.css"],
-        [false], []
+        []
       );
       await testRules(
         ["/(server.com/assets/file.php)?.*$/$rewrite=$1"],
-        [false], []
+        []
       );
       await testRules(
         ["/(server.com/assets/file.php)?.*$/$rewrite=https://test.com"],
-        [false], []
+        []
       );
       await testRules(
         ["foo$rewrite=$1"],
-        [false], []
+        []
       );
       await testRules(
         ["||example.com/ad.js$script,domain=foo.com,rewrite=abp-resource:foo"],
-        [false], []
+        []
       );
       await testRules(
         ["foo$rewrite=http://google.com"],
-        [false], []
+        []
       );
     });
   });
@@ -852,10 +832,9 @@ describe("Ruleset", function()
   {
     it("should generate websocket blocking rules", async () =>
     {
-      await testRules(["foo$websocket"], [[1]], [
+      await testRules(["foo$websocket"], [
         {
-          id: 1,
-          priority: STANDARD_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "foo",
             isUrlFilterCaseSensitive: false,
@@ -872,10 +851,9 @@ describe("Ruleset", function()
     it("should generate modifyHeader/allow rules for CSP " +
        "filters", async () =>
     {
-      await testRules(["foo$csp=img-src 'none'"], [[1]], [
+      await testRules(["foo$csp=img-src 'none'"], [
         {
-          id: 1,
-          priority: CSP_PRIORITY,
+          priority: GENERIC_PRIORITY,
           condition: {
             urlFilter: "foo",
             resourceTypes: ["main_frame", "sub_frame"],
@@ -892,10 +870,9 @@ describe("Ruleset", function()
         }
       ]);
 
-      await testRules(["@@||testpages.adblockplus.org^$csp"], [[1]], [
+      await testRules(["@@||testpages.adblockplus.org^$csp"], [
         {
-          id: 1,
-          priority: CSP_PRIORITY,
+          priority: SPECIFIC_PRIORITY,
           condition: {
             urlFilter: "||testpages.adblockplus.org^",
             resourceTypes: ["main_frame", "sub_frame"]
@@ -905,20 +882,6 @@ describe("Ruleset", function()
           }
         }
       ]);
-    });
-  });
-
-  describe("Rule offset", function()
-  {
-    let filters = ["||example.com", "||foo.com"];
-    let getIds = rules => rules.map(rule => rule.id);
-
-    it("should honour the firstId parameter", async () =>
-    {
-      await testRules(filters, [[1], [2]], [1, 2], getIds);
-      await testRules(filters, [[1], [2]], [1, 2], getIds, 1);
-      await testRules(filters, [[2], [3]], [2, 3], getIds, 2);
-      await testRules(filters, [[1000], [1001]], [1000, 1001], getIds, 1000);
     });
   });
 });

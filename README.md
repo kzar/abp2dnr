@@ -31,17 +31,23 @@ Adblock Plus filter list `input.txt`:
 Behind that, there's an API which the command line interface uses. It works
 something like this:
 
-    const {Ruleset} = require("./lib/abp2dnr");
+    const {convertFilter} = require("./lib/abp2dnr");
 
-    let rulset = new Ruleset();
+    let nextId = 1;
+    let rules = [];
+
     for (let filter in filters)
-      await ruleset.processFilter(filter);
+    {
+      for (let rule of await convertFilter(filter))
+      {
+        rule.id = nextId++;
+        rules.push(rule);
+      }
+    }
 
-    let rules = ruleset.generateRules();
-
-It's important to note that `Ruleset.prototype.processFilter` expects a
-`Filter` Object and _not_ a string containing the filter's text. To parse
-filter text you'll need to do something like this first:
+It's important to note that `convertFilter` expects a `Filter` Object and _not_
+a string containing the filter's text. To parse filter text you'll need to
+do something like this first:
 
     const {Filter} = require("adblockpluscore/lib/filterClasses");
     Filter.fromText(Filter.normalize(filterText));

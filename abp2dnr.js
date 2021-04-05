@@ -24,44 +24,50 @@ const {Filter} = require("adblockpluscore/lib/filterClasses");
 const split2 = require("split2");
 
 const {isRegexSupported} = require("./build/Release/isRegexSupported");
-const {Ruleset} = require("./lib/abp2dnr");
+const {convertFilter} = require("./lib/abp2dnr");
 
 function rulesetStream(stream)
 {
+  let arrayStarted = false;
+  let firstEmitted = false;
+  let nextId = 1;
   let decoder = new StringDecoder("utf-8");
-  let ruleset = new Ruleset(1, isRegexSupported);
 
   let transform = new Transform();
   transform._transform = async (line, encoding, cb) =>
   {
+    let output = "";
+
+    if (!arrayStarted)
+    {
+      output += "[\n";
+      arrayStarted = true;
+    }
+
     if (encoding == "buffer")
       line = decoder.write(line);
 
     if (/^\s*[^[\s]/.test(line))
-      await ruleset.processFilter(Filter.fromText(Filter.normalize(line)));
+    {
+      let filter = Filter.fromText(Filter.normalize(line));
+      for (let rule of await convertFilter(filter, isRegexSupported))
+      {
+        rule.id = nextId++;
 
-    cb(null);
+        if (firstEmitted)
+          output += ",\n";
+        else
+          firstEmitted = true;
+
+        output += JSON.stringify(rule, null, "\t");
+      }
+    }
+
+    cb(null, output);
   };
   transform._flush = (cb) =>
   {
-    let rules = ruleset.generateRules();
-    let output = [];
-
-    // If the rule set is too huge, JSON.stringify throws
-    // "RangeError: Invalid string length" on Node.js. As a workaround, print
-    // each rule individually.
-    output.push("[");
-
-    if (rules.length)
-    {
-      for (let i = 0; i < rules.length - 1; i++)
-        output.push(JSON.stringify(rules[i], null, "\t") + ",");
-      output.push(JSON.stringify(rules[rules.length - 1], null, "\t"));
-    }
-
-    output.push("]");
-
-    cb(null, output.join("\n"));
+    cb(null, arrayStarted ? "\n]\n" : "[]\n");
   };
   return transform;
 }
