@@ -1,0 +1,38 @@
+default:
+  interruptible: true
+
+stages:
+  - test
+
+variables:
+  npm_config_fund: "false"
+
+.test:
+  stage: test
+  script:
+    - git submodule update --init
+    - npm install
+    - npm run rebuild
+    - npm run lint
+    - npm test
+
+test:linux:node10:
+  extends: .test
+  image: node:10-buster
+
+test:linux:node12:
+  extends: .test
+  image: node:12-buster
+
+test:linux:node14:
+  extends: .test
+  image: node:14-buster
+
+test:windows:
+  extends: .test
+  before_script:
+    - choco install python2 --pre -y
+  tags:
+    - shared-windows
+    - windows
+    - windows-1809

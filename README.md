@@ -1,5 +1,3 @@
-![Checks](https://github.com/kzar/abp2dnr/workflows/Checks/badge.svg?branch=main)
-
 # abp2dnr
 
 This is a script to convert [Adblock Plus filter lists](https://adblockplus.org/filters)
