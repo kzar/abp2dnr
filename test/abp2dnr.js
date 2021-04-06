@@ -45,8 +45,19 @@ async function testRules(filters, expected, transformFunction, isRegexSupported)
   assert.deepEqual(rules, expected);
 }
 
-describe("Ruleset", function()
+describe("convertFilter", function()
 {
+  describe("Priorities", function()
+  {
+    it("should have priorities correct relative to each other", () =>
+    {
+      assert.ok(GENERIC_PRIORITY > 0);
+      assert.ok(GENERIC_PRIORITY < GENERIC_ALLOW_ALL_PRIORITY);
+      assert.ok(GENERIC_ALLOW_ALL_PRIORITY < SPECIFIC_PRIORITY);
+      assert.ok(SPECIFIC_PRIORITY < SPECIFIC_ALLOW_ALL_PRIORITY);
+    });
+  });
+
   describe("Request filters", function()
   {
     it("should generate request blocking rules", async () =>
