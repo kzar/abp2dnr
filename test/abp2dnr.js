@@ -603,7 +603,7 @@ describe("convertFilter", function()
       );
 
       await testRules(
-        ["ad$csp=foo", "ad$domain=foo.com,csp=foo",
+        ["ad$csp=foo", "$csp=foo,domain=foo.com",
          "@@ad$csp", "@@ad$csp,genericblock"],
         [GENERIC_PRIORITY, SPECIFIC_PRIORITY,
          SPECIFIC_PRIORITY, GENERIC_PRIORITY],
@@ -893,6 +893,33 @@ describe("convertFilter", function()
           }
         }
       ]);
+    });
+
+    it("should workaround the domain/excludedDomain limitation Chromium has " +
+       "for main_frame requests", async () =>
+    {
+      await testRules(
+        ["$csp=img-src 'none',domain=~foo.com",
+         "ad$csp=img-src 'none',domain=foo.com"],
+        []
+      );
+
+      await testRules(
+        ["$csp=img-src 'none',domain=a.com|b.com"],
+        [
+          {
+            isUrlFilterCaseSensitive: false,
+            resourceTypes: ["main_frame", "sub_frame"],
+            urlFilter: "||a.com^"
+          },
+          {
+            isUrlFilterCaseSensitive: false,
+            resourceTypes: ["main_frame", "sub_frame"],
+            urlFilter: "||b.com^"
+          }
+        ],
+        rule => rule.condition
+      );
     });
   });
 });
