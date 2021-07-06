@@ -2,7 +2,7 @@
   "license": "GPL-3.0",
   "repository": {},
   "dependencies": {
-    "adblockpluscore": "git+https://gitlab.com/eyeo/adblockplus/adblockpluscore.git#ca106c5",
+    "adblockpluscore": ">=0.2.0",
     "nan": "2.14.1",
     "node-gyp": "7.1.0",
     "split2": "3.1.1"
