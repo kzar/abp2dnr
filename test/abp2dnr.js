@@ -175,9 +175,9 @@ describe("convertFilter", function()
               type: "allow"
             }
           }
-         ],
-         null,
-         ({regex}) => ({isSupported: !regex.includes("(?")})
+        ],
+        null,
+        ({regex}) => ({isSupported: !regex.includes("(?")})
       );
     });
   });
@@ -393,98 +393,94 @@ describe("convertFilter", function()
                        "@@https://b.com$document",
                        "@@https://c.com$document",
                        "@@https://d.com$document",
-                       "@@https://e.com$document"],
-        [
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://a.com",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+                       "@@https://e.com$document"], [
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://a.com",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://b.com",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://b.com",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://c.com",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://c.com",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://d.com",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://d.com",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://e.com",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
-          }
-        ]
-      );
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://e.com",
+            resourceTypes: ["main_frame", "sub_frame"]
+          },
+          action: {type: "allowAllRequests"}
+        }
+      ]);
       await testRules(["@@https://a.com*$document",
                        "@@https://b.com^$document",
                        "@@https://c.com?$document",
                        "@@https://d.com/$document",
-                       "@@https://e.com|$document"],
-        [
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://a.com",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+                       "@@https://e.com|$document"], [
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://a.com",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://b.com^",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://b.com^",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://c.com?",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://c.com?",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://d.com/",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://d.com/",
+            resourceTypes: ["main_frame", "sub_frame"]
           },
-          {
-            priority: SPECIFIC_ALLOW_ALL_PRIORITY,
-            condition: {
-              urlFilter: "https://e.com|",
-              resourceTypes: ["main_frame", "sub_frame"]
-            },
-            action: {type: "allowAllRequests"}
-          }
-        ]
-      );
+          action: {type: "allowAllRequests"}
+        },
+        {
+          priority: SPECIFIC_ALLOW_ALL_PRIORITY,
+          condition: {
+            urlFilter: "https://e.com|",
+            resourceTypes: ["main_frame", "sub_frame"]
+          },
+          action: {type: "allowAllRequests"}
+        }
+      ]);
       await testRules(
         ["@@https://a.com*/$document", "@@https://b.com^a$document",
          "@@https://c.com?A$document", "@@https://d.com/1$document",
@@ -543,39 +539,39 @@ describe("convertFilter", function()
     {
       await testRules(
         ["@@foo$genericblock", "@@foo$genericblock,script"], [
-        {
-          action: {
-            type: "allowAllRequests"
+          {
+            action: {
+              type: "allowAllRequests"
+            },
+            priority: GENERIC_ALLOW_ALL_PRIORITY,
+            condition: {
+              urlFilter: "foo",
+              resourceTypes: ["main_frame", "sub_frame"],
+              isUrlFilterCaseSensitive: false
+            }
           },
-          priority: GENERIC_ALLOW_ALL_PRIORITY,
-          condition: {
-            urlFilter: "foo",
-            resourceTypes: ["main_frame", "sub_frame"],
-            isUrlFilterCaseSensitive: false
+          {
+            action: {
+              type: "allowAllRequests"
+            },
+            priority: GENERIC_ALLOW_ALL_PRIORITY,
+            condition: {
+              urlFilter: "foo",
+              resourceTypes: ["main_frame", "sub_frame"],
+              isUrlFilterCaseSensitive: false
+            }
+          },
+          {
+            action: {
+              type: "allow"
+            },
+            condition: {
+              isUrlFilterCaseSensitive: false,
+              resourceTypes: ["script"],
+              urlFilter: "foo"
+            },
+            priority: GENERIC_PRIORITY
           }
-        },
-        {
-          action: {
-            type: "allowAllRequests"
-          },
-          priority: GENERIC_ALLOW_ALL_PRIORITY,
-          condition: {
-            urlFilter: "foo",
-            resourceTypes: ["main_frame", "sub_frame"],
-            isUrlFilterCaseSensitive: false
-          }
-        },
-        {
-          action: {
-            type: "allow"
-          },
-          condition: {
-            isUrlFilterCaseSensitive: false,
-            resourceTypes: ["script"],
-            urlFilter: "foo"
-          },
-          priority: GENERIC_PRIORITY
-        }
         ]
       );
 
@@ -735,18 +731,30 @@ describe("convertFilter", function()
 
     it("should honour the $match-case option", async () =>
     {
-      await testRules(["||test.com"], [undefined],
-                rule => rule.condition.isUrlFilterCaseSensitive);
-      await testRules(["||test.com$match-case"], [undefined],
-                rule => rule.condition.isUrlFilterCaseSensitive);
-      await testRules(["||test.com/foo"], [false],
-                rule => rule.condition.isUrlFilterCaseSensitive);
-      await testRules(["||test.com/foo$match-case"], [undefined],
-                rule => rule.condition.isUrlFilterCaseSensitive);
-      await testRules(["||test.com/Foo"], [false],
-                rule => rule.condition.isUrlFilterCaseSensitive);
-      await testRules(["||test.com/Foo$match-case"], [undefined],
-                rule => rule.condition.isUrlFilterCaseSensitive);
+      await testRules(
+        ["||test.com"], [undefined],
+        rule => rule.condition.isUrlFilterCaseSensitive
+      );
+      await testRules(
+        ["||test.com$match-case"], [undefined],
+        rule => rule.condition.isUrlFilterCaseSensitive
+      );
+      await testRules(
+        ["||test.com/foo"], [false],
+        rule => rule.condition.isUrlFilterCaseSensitive
+      );
+      await testRules(
+        ["||test.com/foo$match-case"], [undefined],
+        rule => rule.condition.isUrlFilterCaseSensitive
+      );
+      await testRules(
+        ["||test.com/Foo"], [false],
+        rule => rule.condition.isUrlFilterCaseSensitive
+      );
+      await testRules(
+        ["||test.com/Foo$match-case"], [undefined],
+        rule => rule.condition.isUrlFilterCaseSensitive
+      );
     });
 
     it("should get advanced $domain and $match-case usage right", async () =>

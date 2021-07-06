@@ -5,6 +5,7 @@
     "node": true
   },
   "rules": {
+    "no-undefined": "off",
     "space-before-function-paren": ["error", {
       "anonymous": "never",
       "named": "never",

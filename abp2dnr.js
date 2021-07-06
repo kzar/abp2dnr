@@ -65,7 +65,7 @@ function rulesetStream(stream)
 
     cb(null, output);
   };
-  transform._flush = (cb) =>
+  transform._flush = cb =>
   {
     cb(null, arrayStarted ? "\n]\n" : "[]\n");
   };
