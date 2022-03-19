@@ -2,7 +2,7 @@
   "license": "GPL-3.0",
   "repository": {},
   "dependencies": {
-    "adblockpluscore": "0.3.0",
+    "adblockpluscore": "0.6.0",
     "nan": "2.14.1",
     "node-gyp": "8.4.1",
     "split2": "3.1.1"

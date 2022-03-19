@@ -112,7 +112,7 @@ describe("convertFilter", function()
     it("shouldn't generate blocking rules matching no request type", async () =>
     {
       await testRules(
-        ["foo$document", "||foo.com$document"], []
+        ["foo*$document", "||foo.com$document"], []
       );
     });
 
@@ -576,7 +576,7 @@ describe("convertFilter", function()
     it("should handle $genericblock exceptions", async () =>
     {
       await testRules(
-        ["@@foo$genericblock", "@@foo$genericblock,script"], [
+        ["@@foo*$genericblock", "@@foo*$genericblock,script"], [
           {
             action: {
               type: "allowAllRequests"
@@ -668,10 +668,10 @@ describe("convertFilter", function()
     it("should properly map request types", async () =>
     {
       await testRules(
-        ["1", "2$image", "3$stylesheet", "4$script", "5$font", "6$media",
-         "7$object", "8$object_subrequest", "9$xmlhttprequest", "10$websocket",
-         "11$ping", "12$subdocument", "13$other", "14$IMAGE", "15$script,PING",
-         "16$~image"],
+        ["1*", "2*$image", "3*$stylesheet", "4*$script", "5*$font", "6*$media",
+         "7*$object", "8*$object_subrequest", "9*$xmlhttprequest",
+         "10*$websocket", "11*$ping", "12*$subdocument", "13*$other",
+         "14*$IMAGE", "15*$script,PING", "16*$~image"],
         [undefined,
          ["image"],
          ["stylesheet"],
@@ -707,7 +707,7 @@ describe("convertFilter", function()
 
     it("should ignore $sitekey filters", async () =>
     {
-      await testRules(["foo$sitekey=bar"], []);
+      await testRules(["foo*$sitekey=bar"], []);
     });
 
     it("should ignore element hiding filters", async () =>
@@ -731,20 +731,20 @@ describe("convertFilter", function()
 
     it("should ignore WebRTC filters", async () =>
     {
-      await testRules(["foo$webrtc"], []);
+      await testRules(["foo*$webrtc"], []);
     });
 
     it("should ignore filters for popup windows", async () =>
     {
-      await testRules(["bar$popup"], []);
+      await testRules(["bar*$popup"], []);
     });
 
     it("should ignore filters which contain unicode characeters", async () =>
     {
       await testRules(["$domain=🐈.cat"], []);
       await testRules(["||🐈"], []);
-      await testRules(["🐈$domain=🐈.cat"], []);
-      await testRules(["🐈%F0%9F%90%88$domain=🐈.cat"], []);
+      await testRules(["🐈*$domain=🐈.cat"], []);
+      await testRules(["🐈%F0%9F%90%88*$domain=🐈.cat"], []);
     });
 
     it("should ignore filters with invalid filter options", async () =>
@@ -775,8 +775,8 @@ describe("convertFilter", function()
   {
     it("should honour the $domain option", async () =>
     {
-      await testRules(["1$domain=foo.com|~subdomain.foo.com",
-                       "@@2$domain=bar.com|~subdomain.bar.com,document"],
+      await testRules(["1*$domain=foo.com|~subdomain.foo.com",
+                       "@@2*$domain=bar.com|~subdomain.bar.com,document"],
                       [[["foo.com"], ["subdomain.foo.com"],
                         undefined, undefined],
                        [undefined, undefined,
@@ -792,7 +792,7 @@ describe("convertFilter", function()
     });
     it("should honour the $third-party option", async () =>
     {
-      await testRules(["2$third-party"], ["thirdParty"],
+      await testRules(["2*$third-party"], ["thirdParty"],
                       rule => rule.condition.domainType);
     });
 
@@ -846,7 +846,7 @@ describe("convertFilter", function()
 
     it("should honour subdomain exceptions", async () =>
     {
-      await testRules(["1$domain=foo.com|~bar.foo.com"], [
+      await testRules(["1*$domain=foo.com|~bar.foo.com"], [
         {
           priority: SPECIFIC_PRIORITY,
           condition: {
@@ -925,7 +925,7 @@ describe("convertFilter", function()
         []
       );
       await testRules(
-        ["foo$rewrite=$1"],
+        ["foo*$rewrite=$1"],
         []
       );
       await testRules(
@@ -933,7 +933,7 @@ describe("convertFilter", function()
         []
       );
       await testRules(
-        ["foo$rewrite=http://google.com"],
+        ["foo*$rewrite=http://google.com"],
         []
       );
     });
@@ -943,7 +943,7 @@ describe("convertFilter", function()
   {
     it("should generate websocket blocking rules", async () =>
     {
-      await testRules(["foo$websocket"], [
+      await testRules(["foo*$websocket"], [
         {
           priority: GENERIC_PRIORITY,
           condition: {
@@ -962,7 +962,7 @@ describe("convertFilter", function()
     it("should generate modifyHeader/allow rules for CSP " +
        "filters", async () =>
     {
-      await testRules(["foo$csp=img-src 'none'"], [
+      await testRules(["foo*$csp=img-src 'none'"], [
         {
           priority: GENERIC_PRIORITY,
           condition: {
