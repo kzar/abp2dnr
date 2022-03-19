@@ -24,26 +24,16 @@ const {Filter} = require("adblockpluscore/lib/filterClasses");
 const split2 = require("split2");
 
 const {isRegexSupported} = require("./build/Release/isRegexSupported");
-const {convertFilter} = require("./lib/abp2dnr");
+const {convertFilter, compressRules} = require("./lib/abp2dnr");
 
 function rulesetStream(stream)
 {
-  let arrayStarted = false;
-  let firstEmitted = false;
-  let nextId = 1;
+  let rules = [];
   let decoder = new StringDecoder("utf-8");
 
   let transform = new Transform();
   transform._transform = async (line, encoding, cb) =>
   {
-    let output = "";
-
-    if (!arrayStarted)
-    {
-      output += "[\n";
-      arrayStarted = true;
-    }
-
     if (encoding == "buffer")
       line = decoder.write(line);
 
@@ -51,23 +41,30 @@ function rulesetStream(stream)
     {
       let filter = Filter.fromText(Filter.normalize(line));
       for (let rule of await convertFilter(filter, isRegexSupported))
-      {
-        rule.id = nextId++;
-
-        if (firstEmitted)
-          output += ",\n";
-        else
-          firstEmitted = true;
-
-        output += JSON.stringify(rule, null, "\t");
-      }
+        rules.push(rule);
     }
 
-    cb(null, output);
+    cb(null);
   };
   transform._flush = cb =>
   {
-    cb(null, arrayStarted ? "\n]\n" : "[]\n");
+    if (!rules.length)
+    {
+      cb(null, "[]\n");
+      return;
+    }
+
+    let output = "[\n";
+    let id = 1;
+    for (let rule of compressRules(rules))
+    {
+      if (id > 1)
+        output += ",\n";
+      rule.id = id++;
+      output += JSON.stringify(rule, null, "\t");
+    }
+    output += "\n]\n";
+    cb(null, output);
   };
   return transform;
 }

@@ -21,12 +21,14 @@ const assert = require("assert");
 
 const {Filter} = require("adblockpluscore/lib/filterClasses");
 const {convertFilter,
+       compressRules,
        GENERIC_PRIORITY,
        GENERIC_ALLOW_ALL_PRIORITY,
        SPECIFIC_PRIORITY,
        SPECIFIC_ALLOW_ALL_PRIORITY} = require("../lib/abp2dnr.js");
 
-async function testRules(filters, expected, transformFunction, isRegexSupported)
+async function testRules(filters, expected, transformRulesetFunction,
+                         transformRuleFunction, isRegexSupported)
 {
   let rules = [];
 
@@ -39,8 +41,11 @@ async function testRules(filters, expected, transformFunction, isRegexSupported)
     }
   }
 
-  if (transformFunction)
-    rules = rules.map(transformFunction);
+  if (transformRulesetFunction)
+    rules = transformRulesetFunction(rules);
+
+  if (transformRuleFunction)
+    rules = rules.map(transformRuleFunction);
 
   assert.deepEqual(rules, expected);
 }
@@ -177,6 +182,7 @@ describe("convertFilter", function()
           }
         ],
         null,
+        null,
         ({regex}) => ({isSupported: !regex.includes("(?")})
       );
     });
@@ -216,6 +222,7 @@ describe("convertFilter", function()
       await testRules(
         ["@@||example.com", "@@$media,domain=example.com"],
         ["||example.com", undefined],
+        null,
         rule => rule.condition.urlFilter
       );
     });
@@ -631,6 +638,7 @@ describe("convertFilter", function()
          ["ad.png", SPECIFIC_ALLOW_ALL_PRIORITY],
          ["flib.com", SPECIFIC_ALLOW_ALL_PRIORITY],
          ["flib.com", SPECIFIC_ALLOW_ALL_PRIORITY]],
+        null,
         rule => [rule.condition.urlFilter, rule.priority]
       );
 
@@ -645,6 +653,7 @@ describe("convertFilter", function()
          ["^c.jpg|", GENERIC_PRIORITY],
          ["^d.jpg|", GENERIC_PRIORITY],
          ["^e.jpg|", SPECIFIC_PRIORITY]],
+        null,
         rule => [rule.condition.urlFilter, rule.priority]
       );
 
@@ -658,6 +667,7 @@ describe("convertFilter", function()
          ["b", SPECIFIC_PRIORITY],
          ["c", SPECIFIC_PRIORITY],
          ["d", GENERIC_PRIORITY]],
+        null,
         rule => [rule.condition.urlFilter, rule.priority]
       );
     });
@@ -689,6 +699,7 @@ describe("convertFilter", function()
          ["ping", "script"],
          ["csp_report", "font", "media", "object", "other", "ping", "script",
           "stylesheet", "sub_frame", "websocket", "xmlhttprequest"]],
+        null,
         rule =>
         {
           let resourceTypes = rule.condition.resourceTypes;
@@ -783,6 +794,7 @@ describe("convertFilter", function()
                         ["bar.com"], ["subdomain.bar.com"]],
                        [["bar.com"], ["subdomain.bar.com"],
                         undefined, undefined]],
+                      null,
                       rule => [
                         rule.condition.initiatorDomains,
                         rule.condition.excludedInitiatorDomains,
@@ -792,34 +804,34 @@ describe("convertFilter", function()
     });
     it("should honour the $third-party option", async () =>
     {
-      await testRules(["2*$third-party"], ["thirdParty"],
+      await testRules(["2*$third-party"], ["thirdParty"], null,
                       rule => rule.condition.domainType);
     });
 
     it("should honour the $match-case option", async () =>
     {
       await testRules(
-        ["||test.com"], [undefined],
+        ["||test.com"], [undefined], null,
         rule => rule.condition.isUrlFilterCaseSensitive
       );
       await testRules(
-        ["||test.com$match-case"], [undefined],
+        ["||test.com$match-case"], [undefined], null,
         rule => rule.condition.isUrlFilterCaseSensitive
       );
       await testRules(
-        ["||test.com/foo"], [false],
+        ["||test.com/foo"], [false], null,
         rule => rule.condition.isUrlFilterCaseSensitive
       );
       await testRules(
-        ["||test.com/foo$match-case"], [undefined],
+        ["||test.com/foo$match-case"], [undefined], null,
         rule => rule.condition.isUrlFilterCaseSensitive
       );
       await testRules(
-        ["||test.com/Foo"], [false],
+        ["||test.com/Foo"], [false], null,
         rule => rule.condition.isUrlFilterCaseSensitive
       );
       await testRules(
-        ["||test.com/Foo$match-case"], [undefined],
+        ["||test.com/Foo$match-case"], [undefined], null,
         rule => rule.condition.isUrlFilterCaseSensitive
       );
     });
@@ -840,6 +852,7 @@ describe("convertFilter", function()
          {urlFilter: "||foo.com/a", isUrlFilterCaseSensitive: false},
          {urlFilter: "||foo.com/A"}
         ],
+        null,
         rule => rule.condition
       );
     });
@@ -1118,3 +1131,131 @@ describe("convertFilter", function()
     });
   });
 });
+
+describe("compressRules", function()
+{
+  it("should combine rules where possible", async () =>
+  {
+    let ruleSortString = rule =>
+      rule.action.type + rule.condition.urlFilter +
+      (rule.condition.requestDomains || []).toString() + rule.priority;
+
+    let sortRule = (a, b) =>
+    {
+      a = ruleSortString(a);
+      b = ruleSortString(b);
+
+      if (a == b)
+        return 0;
+
+      return a < b ? -1 : 1;
+    };
+
+    await testRules(
+      ["||a.com^", "||b.com^", "||c.com^", "@@||d.com^", "||e.com^$image",
+       "||f.com^$domain=a.com,csp=img-src 'none'",
+       "||g.com^$csp=img-src 'none',domain=a.com",
+       "||h.com$image", "||i.com^$image", "||j.com^$script", "||k.com^hello"],
+      [{
+        priority: GENERIC_PRIORITY,
+        condition: {
+          requestDomains: ["a.com", "b.com", "c.com"]
+        },
+        action: {
+          type: "block"
+        }
+      }, {
+        priority: SPECIFIC_PRIORITY,
+        condition: {
+          urlFilter: "||d.com^"
+        },
+        action: {
+          type: "allow"
+        }
+      }, {
+        priority: GENERIC_PRIORITY,
+        condition: {
+          requestDomains: ["e.com", "i.com"],
+          resourceTypes: ["image"]
+        },
+        action: {
+          type: "block"
+        }
+      }, {
+        priority: SPECIFIC_PRIORITY,
+        condition: {
+          resourceTypes: ["sub_frame"],
+          initiatorDomains: ["a.com"],
+          requestDomains: ["f.com", "g.com"]
+        },
+        action: {
+          type: "modifyHeaders",
+          responseHeaders: [{
+            header: "Content-Security-Policy",
+            operation: "append",
+            value: "img-src 'none'"
+          }]
+        }
+      }, {
+        priority: SPECIFIC_PRIORITY,
+        condition: {
+          urlFilter: "||f.com^",
+          resourceTypes: ["main_frame"],
+          requestDomains: ["a.com"]
+        },
+        action: {
+          type: "modifyHeaders",
+          responseHeaders: [{
+            header: "Content-Security-Policy",
+            operation: "append",
+            value: "img-src 'none'"
+          }]
+        }
+      }, {
+        priority: SPECIFIC_PRIORITY,
+        condition: {
+          urlFilter: "||g.com^",
+          resourceTypes: ["main_frame"],
+          requestDomains: ["a.com"]
+        },
+        action: {
+          type: "modifyHeaders",
+          responseHeaders: [{
+            header: "Content-Security-Policy",
+            operation: "append",
+            value: "img-src 'none'"
+          }]
+        }
+      }, {
+        priority: GENERIC_PRIORITY,
+        condition: {
+          urlFilter: "||h.com",
+          resourceTypes: ["image"]
+        },
+        action: {
+          type: "block"
+        }
+      }, {
+        priority: GENERIC_PRIORITY,
+        condition: {
+          urlFilter: "||j.com^",
+          resourceTypes: ["script"]
+        },
+        action: {
+          type: "block"
+        }
+      }, {
+        priority: GENERIC_PRIORITY,
+        condition: {
+          isUrlFilterCaseSensitive: false,
+          urlFilter: "||k.com^hello"
+        },
+        action: {
+          type: "block"
+        }
+      }].sort(sortRule),
+      rules => compressRules(rules).sort(sortRule)
+    );
+  });
+});
+

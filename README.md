@@ -35,19 +35,21 @@ Adblock Plus filter list `input.txt`:
 Behind that, there's an API which the command line interface uses. It works
 something like this:
 
-    const {convertFilter} = require("./lib/abp2dnr");
+    const {convertFilter, compressRules} = require("./lib/abp2dnr");
 
-    let nextId = 1;
-    let rules = [];
+    let rules = []
 
-    for (let filter in filters)
-    {
-      for (let rule of await convertFilter(filter))
-      {
-        rule.id = nextId++;
-        rules.push(rule);
-      }
-    }
+    // Convert the filters to declarativeNetRequest rules.
+    for (let filter of filters)
+      rules.push(await convertFilter(filter));
+
+    // Optionally combine rules where possible.
+    rules = compressRules(rules)
+
+    // Assign the rules an ID.
+    let id = 1;
+    for (let rule of rules)
+      rule.id = id++;
 
 It's important to note that `convertFilter` expects a `Filter` Object and _not_
 a string containing the filter's text. To parse filter text you'll need to
