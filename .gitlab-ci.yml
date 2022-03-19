@@ -16,17 +16,13 @@ variables:
     - npm run lint
     - npm test
 
-test:linux:node10:
+test:linux:node16:
   extends: .test
-  image: node:10-buster
+  image: node:16-buster
 
-test:linux:node12:
+test:linux:node17:
   extends: .test
-  image: node:12-buster
-
-test:linux:node14:
-  extends: .test
-  image: node:14-buster
+  image: node:17-buster
 
 test:windows:
   extends: .test

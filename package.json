@@ -2,15 +2,15 @@
   "license": "GPL-3.0",
   "repository": {},
   "dependencies": {
-    "adblockpluscore": ">=0.2.0",
+    "adblockpluscore": "0.3.0",
     "nan": "2.14.1",
-    "node-gyp": "7.1.0",
+    "node-gyp": "8.4.1",
     "split2": "3.1.1"
   },
   "devDependencies": {
-    "eslint": "7.30.0",
+    "eslint": "7.32.0",
     "eslint-config-eyeo": "3.2.0",
-    "mocha": "9.0.2"
+    "mocha": "9.2.2"
   },
   "main": "lib/abp2dnr.js",
   "scripts": {
