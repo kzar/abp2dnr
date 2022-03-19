@@ -31,7 +31,7 @@ NAN_METHOD(IsRegexSupported) {
   if (regex_options->Has(context, require_capturing_key).ToChecked())
     require_capturing = Nan::To<bool>(regex_options->Get(context, require_capturing_key).ToLocalChecked()).FromJust();
 
-  // We're mirroring the options which the declarativeNetRequest code uses, see
+  // Mirror the options which the declarativeNetRequest code uses, see
   // https://source.chromium.org/chromium/chromium/src/+/master:extensions/browser/api/declarative_net_request/utils.cc;l=232-253
   re2::RE2::Options options;
   options.set_encoding(re2::RE2::Options::EncodingLatin1);
