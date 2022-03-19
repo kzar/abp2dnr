@@ -916,12 +916,10 @@ describe("convertFilter", function()
         ["$csp=img-src 'none',domain=a.com|b.com"],
         [
           {
-            isUrlFilterCaseSensitive: false,
             resourceTypes: ["main_frame", "sub_frame"],
             urlFilter: "||a.com^"
           },
           {
-            isUrlFilterCaseSensitive: false,
             resourceTypes: ["main_frame", "sub_frame"],
             urlFilter: "||b.com^"
           }
