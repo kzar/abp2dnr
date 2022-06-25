@@ -19,69 +19,69 @@
 
 const assert = require("assert");
 
-const {isRegexSupported} = require("../build/Release/isRegexSupported");
-
 describe("isRegexSupported", function()
 {
-  it("should throw if arguments are invalid", async () =>
+  it("should throw if arguments are invalid", async function()
   {
-    assert.throws(() => { isRegexSupported(); });
-    assert.throws(() => { isRegexSupported(1); });
-    assert.throws(() => { isRegexSupported(1, 2, 3); });
-    assert.throws(() => { isRegexSupported({}); });
-    assert.throws(() => { isRegexSupported({foo: "bar"}); });
-    assert.throws(() => { isRegexSupported({regex: "bar"}, 1); });
+    assert.rejects(() => this.browser.isRegexSupported());
+    assert.rejects(() => this.browser.isRegexSupported(1));
+    assert.rejects(() => this.browser.isRegexSupported(1, 2, 3));
+    assert.rejects(() => this.browser.isRegexSupported({}));
+    assert.rejects(() => this.browser.isRegexSupported({foo: "bar"}));
+    assert.rejects(() => this.browser.isRegexSupported({regex: "bar"}, 1));
   });
 
-  it("should accept a valid regular expression", async () =>
+  it("should accept a valid regular expression", async function()
   {
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "[0-9]+"
     }), {isSupported: true});
   });
 
-  it("should accept a valid regular expression with options", async () =>
+  it("should accept a valid regular expression with options", async function()
   {
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "[0-9]+",
       isCaseSensitive: false,
       requireCapturing: true
     }), {isSupported: true});
   });
 
-  it("should reject an invalid regular expression", async () =>
+  it("should reject an invalid regular expression", async function()
   {
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "[a-9]+"
     }), {isSupported: false, reason: "syntaxError"});
   });
 
-  it("should reject an invalid regular expression with options", async () =>
-  {
-    assert.deepEqual(isRegexSupported({
-      regex: "[a-9]+",
-      isCaseSensitive: false,
-      requireCapturing: true
-    }), {isSupported: false, reason: "syntaxError"});
-  });
+  it("should reject an invalid regular expression with options",
+     async function()
+     {
+       assert.deepEqual(await this.browser.isRegexSupported({
+         regex: "[a-9]+",
+         isCaseSensitive: false,
+         requireCapturing: true
+       }), {isSupported: false, reason: "syntaxError"});
+     }
+  );
 
-  it("should reject long regular expression", async () =>
+  it("should reject long regular expression", async function()
   {
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "[0-9]+".repeat(1000)
     }), {isSupported: false, reason: "memoryLimitExceeded"});
   });
 
-  it("should reject long regular expression with options", async () =>
+  it("should reject long regular expression with options", async function()
   {
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "(a)".repeat(50)
     }), {isSupported: true});
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "(a)".repeat(50),
       requireCapturing: false
     }), {isSupported: true});
-    assert.deepEqual(isRegexSupported({
+    assert.deepEqual(await this.browser.isRegexSupported({
       regex: "(a)".repeat(50),
       requireCapturing: true
     }), {isSupported: false, reason: "memoryLimitExceeded"});

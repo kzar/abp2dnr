@@ -1258,4 +1258,3 @@ describe("compressRules", function()
     );
   });
 });
-

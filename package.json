@@ -3,20 +3,21 @@
   "repository": {},
   "dependencies": {
     "adblockpluscore": "0.6.0",
-    "nan": "2.14.1",
-    "node-gyp": "8.4.1",
     "split2": "3.1.1"
   },
   "devDependencies": {
     "eslint": "7.32.0",
     "eslint-config-eyeo": "3.2.0",
-    "mocha": "9.2.2"
+    "mocha": "9.2.2",
+    "ddg2dnr": "github:duckduckgo/ddg2dnr#288f421",
+    "puppeteer": "15.1.1"
   },
   "main": "lib/abp2dnr.js",
+  "mocha": {
+    "require": "ddg2dnr/test/utils/hooks.js"
+  },
   "scripts": {
     "lint": "eslint *.js lib/ test/",
-    "test": "mocha",
-    "rebuild": "node-gyp rebuild",
-    "install": "npm run rebuild"
+    "test": "mocha"
   }
 }

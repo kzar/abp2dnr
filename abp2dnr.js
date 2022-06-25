@@ -23,12 +23,15 @@ const {StringDecoder} = require("string_decoder");
 const {Filter} = require("adblockpluscore/lib/filterClasses");
 const split2 = require("split2");
 
-const {isRegexSupported} = require("./build/Release/isRegexSupported");
+const {PuppeteerInterface} = require("ddg2dnr/puppeteerInterface");
 const {convertFilter, compressRules} = require("./lib/abp2dnr");
 
 function rulesetStream(stream)
 {
   let rules = [];
+
+  let browser = new PuppeteerInterface();
+  let isRegexSupported = browser.isRegexSupported.bind(browser);
   let decoder = new StringDecoder("utf-8");
 
   let transform = new Transform();
@@ -48,6 +51,8 @@ function rulesetStream(stream)
   };
   transform._flush = cb =>
   {
+    browser.closeBrowser();
+
     if (!rules.length)
     {
       cb(null, "[]\n");
