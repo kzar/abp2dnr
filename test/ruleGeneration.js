@@ -50,7 +50,7 @@ async function testRules(filters, expected, transformRulesetFunction,
   assert.deepEqual(rules, expected);
 }
 
-describe("convertFilter", function()
+describe("Rule generation", function()
 {
   describe("Priorities", function()
   {
