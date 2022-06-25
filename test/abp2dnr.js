@@ -750,7 +750,7 @@ describe("convertFilter", function()
       await testRules(["bar*$popup"], []);
     });
 
-    it("should ignore filters which contain unicode characeters", async () =>
+    it("should ignore filters which contain Unicode characters", async () =>
     {
       await testRules(["$domain=🐈.cat"], []);
       await testRules(["||🐈"], []);
