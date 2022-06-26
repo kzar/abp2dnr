@@ -22,6 +22,12 @@ const assert = require("assert");
 const {Filter} = require("adblockpluscore/lib/filterClasses");
 const {compressRules, convertFilter} = require("../lib/abp2dnr.js");
 
+// Note: Rules are automatically cleared between tests, so the current rule ID
+//       could also be cleared at the same time. It doesn't matter much however,
+//       and this way there's no chance of accidentally using the same ID twice
+//       in a test.
+let currentRuleId = 1;
+
 async function addFilters(browser, filters)
 {
   let isRegexSupported = browser.isRegexSupported.bind(browser);
@@ -35,21 +41,47 @@ async function addFilters(browser, filters)
     }
   }
   rules = compressRules(rules);
-  let id = 1;
   for (let rule of rules)
-    rule.id = id++;
+    rule.id = currentRuleId++;
   return await browser.addRules(rules);
 }
 
 async function testRequestOutcome(browser, requestDetails,
                                   verboseAction = false)
 {
+  let allowAllRequestMatch = null;
+
+  // First check if the initiating website matches an allowAllRequests rule.
+  if (requestDetails.initiator && requestDetails.type !== "main_frame")
+  {
+    let matchingRules = await browser.testMatchOutcome({
+      url: requestDetails.initiator,
+      type: "main_frame"
+    });
+    if (matchingRules.length > 0 &&
+        matchingRules[0].action.type === "allowAllRequests")
+    {
+      allowAllRequestMatch = matchingRules;
+    }
+  }
+
+  // Then check if the request itself matches any rules.
   let matchingRules = await browser.testMatchOutcome(requestDetails);
+
+  // Check if the initiating website's allowAllRequest rule takes priority.
+  if (allowAllRequestMatch && allowAllRequestMatch.length > 0 && (
+    matchingRules.length === 0 ||
+    matchingRules[0].priority <= allowAllRequestMatch[0].priority
+  ))
+  {
+    matchingRules = allowAllRequestMatch;
+  }
 
   if (verboseAction)
     return matchingRules.map(({action}) => action);
 
-  if (matchingRules.length === 0)
+  if (matchingRules.length === 0 ||
+      matchingRules[0].action.type === "allowAllRequests")
     return "allow";
 
   return matchingRules.map(({action: {type}}) => type).join(",");
@@ -238,6 +270,331 @@ describe("Request matching", function()
         type: "image"
       }),
       "allow"
+    );
+  });
+
+  it("should block by initiator domain correctly", async function()
+  {
+    await addFilters(this.browser, [
+      "advert$domain=initiator.invalid|other-initiator.invalid",
+      "tracker$domain=~tracker.invalid"
+    ]);
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/advert",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://initiator.invalid/advert",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/advert",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/advert",
+        initiator: "https://initiator.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/advert",
+        initiator: "https://other-initiator.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/advert",
+        initiator: "https://subdomain.other-initiator.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/advert",
+        initiator: "https://wrong-initiator.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/tracker",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/tracker",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/tracker",
+        initiator: "https://tracker.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+  });
+
+  it("should not block $genericblock allowlisted requests", async function()
+  {
+    await addFilters(this.browser, [
+      "foo*", "bar$domain=~other.invalid", "flib$domain=example.invalid",
+      "@@$genericblock,domain=example.invalid"
+    ]);
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/foo",
+        initiator: "https://other.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/bar",
+        initiator: "https://other.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/bar",
+        initiator: "https://other2.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/flib",
+        initiator: "https://other.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/foo",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/bar",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://request-domain.invalid/flib",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+  });
+
+  it("should apply $csp filters correctly", async function()
+  {
+    await addFilters(this.browser, [
+      "||example.invalid$csp=script-src: 'none'"
+    ]);
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid",
+        type: "main_frame"
+      }, true),
+      [
+        {
+          type: "modifyHeaders",
+          responseHeaders: [
+            {
+              header: "Content-Security-Policy",
+              operation: "append",
+              value: "script-src: 'none'"
+            }
+          ]
+        }
+      ]
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid",
+        type: "sub_frame"
+      }, true),
+      [
+        {
+          type: "modifyHeaders",
+          responseHeaders: [
+            {
+              header: "Content-Security-Policy",
+              operation: "append",
+              value: "script-src: 'none'"
+            }
+          ]
+        }
+      ]
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://other-example.invalid",
+        type: "main_frame"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid",
+        type: "script"
+      }),
+      "allow"
+    );
+  });
+
+  xit("should redirect requests matching rewrite filters", async function()
+  {
+    await addFilters(this.browser, [
+      "||example.invalid/foo$domain=bar.invalid,rewrite=abp-resource:blank-js"
+    ]);
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/foo",
+        initiator: "https://bar.invalid",
+        type: "script"
+      }, true),
+      [
+        {
+          type: "redirect",
+          redirect: {
+            url: "data:application/javascript,"
+          }
+        }
+      ]
+    );
+  });
+
+
+  it("should block third-party requests correctly", async function()
+  {
+    await addFilters(this.browser, [
+      "foo*$third-party", "bar*$~third-party"
+    ]);
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/foo",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/foo",
+        initiator: "https://other.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/bar",
+        initiator: "https://example.invalid",
+        type: "image"
+      }),
+      "block"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/bar",
+        initiator: "https://other.invalid",
+        type: "image"
+      }),
+      "allow"
+    );
+  });
+
+  it("should block requests matching regular expressions", async function()
+  {
+    await addFilters(this.browser, [
+      "/foo\\d+bar/"
+    ]);
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/foobar",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/foo-bar",
+        type: "image"
+      }),
+      "allow"
+    );
+
+    assert.deepEqual(
+      await testRequestOutcome(this.browser, {
+        url: "https://example.invalid/foo123bar",
+        type: "image"
+      }),
+      "block"
     );
   });
 });
