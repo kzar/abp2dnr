@@ -6,6 +6,7 @@
   },
   "rules": {
     "no-undefined": "off",
+    "no-warning-comments": "off",
     "space-before-function-paren": ["error", {
       "anonymous": "never",
       "named": "never",
