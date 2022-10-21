@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         node-version: [16.x, 17.x]
-        os: [ubuntu-latest] # FIXME - Enable windows-latest and macos-latest.
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}

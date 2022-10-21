@@ -500,8 +500,7 @@ describe("Request matching", function()
     );
   });
 
-  // FIXME - Enable this test case once https://crbug.com/1339694 is fixed.
-  xit("should redirect requests matching rewrite filters", async function()
+  it("should redirect requests matching rewrite filters", async function()
   {
     await addFilters(this.browser, [
       "||example.invalid/foo$domain=bar.invalid,rewrite=abp-resource:blank-js"
